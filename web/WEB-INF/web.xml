@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="3.1" xmlns="http://xmlns.jcp.org/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd">
+    <servlet>
+        <servlet-name>StateWiseAnalysisServlet</servlet-name>
+        <servlet-class>pkg1.StateWiseAnalysisServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>LoadInitDataForStateWiseAnalysis</servlet-name>
+        <servlet-class>pkg1.LoadInitDataForStateWiseAnalysis</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>FilterByGeometryOnMapServlet</servlet-name>
+        <servlet-class>pkg1.FilterByGeometryOnMapServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>StateWiseAnalysisServlet</servlet-name>
+        <url-pattern>/StateWiseAnalysisServlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>LoadInitDataForStateWiseAnalysis</servlet-name>
+        <url-pattern>/LoadInitDataForStateWiseAnalysis</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>FilterByGeometryOnMapServlet</servlet-name>
+        <url-pattern>/FilterByGeometryOnMapServlet</url-pattern>
+    </servlet-mapping>
+    <session-config>
+        <session-timeout>
+            30
+        </session-timeout>
+    </session-config>
+</web-app>
