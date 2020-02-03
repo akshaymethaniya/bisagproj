@@ -13,6 +13,8 @@ import java.sql.Statement;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -23,11 +25,27 @@ public class CalculateCount  {
     private static final String DB_PREFIX="osmdata-";
     private static final String USERNAME="postgres";
     private static final String PASSWORD="postgres";
-    public CalculateCount()
-    {
-        
+    String itemToCount;
+    int year;
+    String STATE_OSM_ID;
+    Map<String, String[]> parameters;
+    String geometry=null;
+
+    public CalculateCount(String itemToCount, int year, String STATE_OSM_ID, Map<String, String[]> parameters, String geometry) {
+        this.itemToCount = itemToCount;
+        this.year = year;
+        this.STATE_OSM_ID = STATE_OSM_ID;
+        this.parameters = parameters;
+        this.geometry = geometry;
     }
-    public static int calculateWithinGeometry(String itemToCount,int year,String STATE_OSM_ID,Map<String, String[]> parameters,String geometry)
+    public CalculateCount(String itemToCount, int year, String STATE_OSM_ID, Map<String, String[]> parameters) {
+        this.itemToCount = itemToCount;
+        this.year = year;
+        this.STATE_OSM_ID = STATE_OSM_ID;
+        this.parameters = parameters;
+    }
+
+    public int calculateWithinGeometry()
     {
         System.out.println("CAlCULATING FOR YEAR STARTED :"+year+"On "+new Date());
         
@@ -43,7 +61,7 @@ public class CalculateCount  {
         //STILL NEED TO ADD PROPERTIES IN WHERE PART
         String SELECT_PART="SELECT COUNT(distinct osm_id) ";
         String FROM_PART="FROM "+TABLE_NAME+" ";
-       String WHERE_PART="WHERE ";
+        String WHERE_PART="WHERE ";
         for(Map.Entry<String,String []> entry:parameters.entrySet())
         {
             if(entry.getValue()[0].equals("Anything"))
@@ -65,10 +83,7 @@ public class CalculateCount  {
         String sql=SELECT_PART+FROM_PART+WHERE_PART;
         
         
-        if(QueryResult.containsKey(sql+";"+year))
-        {
-            return QueryResult.get(sql+";"+year);
-        }
+       
         try
         {
             Class.forName("org.postgresql.Driver");
@@ -77,11 +92,17 @@ public class CalculateCount  {
             
             st=con.createStatement();
             
-            String dropViewSql="DROP VIEW IF EXISTS myview_"+year;
-            String createViewSql="CREATE VIEW myview_"+year+" AS SELECT * "+FROM_PART+WHERE_PART;
+            String dropViewSql="DROP VIEW IF EXISTS view"+year+"_"+itemToCount;
+            String createViewSql="CREATE VIEW view"+year+"_"+itemToCount+" AS SELECT * "+FROM_PART+WHERE_PART;
             st.execute(dropViewSql);
             st.execute(createViewSql);
             
+            //Check Is Already Calculated
+            if(QueryResult.containsKey(sql+";"+year))
+            {
+                System.out.println("\t\tCAlCULATING FOR YEAR ENDED :"+year+" On "+new Date());
+                return QueryResult.get(sql+";"+year);
+            }
             rs=st.executeQuery(sql);
             if(rs.next())
             {
@@ -159,8 +180,10 @@ public class CalculateCount  {
         String SELECT_PART="select COUNT(distinct P2.osm_id) ";
         return SELECT_PART+"FROM planet_osm_polygon P1,"+TABLE_NAME+" P2 "+"WHERE "+WHERE_PART+"P1.osm_id = "+STATE_OSM_ID+" AND ST_within(P2.way, P1.way)";
     }
-    public static int calculate(String itemToCount,int year,String STATE_OSM_ID,Map<String, String[]> parameters) throws SQLException
+    public int calculate() 
     {
+        System.out.println(" 2.CAlCULATING FOR YEAR STARTED :"+year+"On "+new Date());
+        //System.out.println(parameters.toString());
         String DBNAME=getDBName(year);
         String TABLE_NAME=MapToTable(itemToCount);
         String WHERE_PART=generateWherePart(parameters);
@@ -173,11 +196,7 @@ public class CalculateCount  {
        
         System.out.println("\n\n\n\n\nQuery : "+sql);
 
-        //Check Is Already Calculated
-        if(QueryResult.containsKey(sql+";"+year))
-        {
-            return QueryResult.get(sql+";"+year);
-        }
+        
         //If not
         try {
             
@@ -187,26 +206,37 @@ public class CalculateCount  {
             
             Statement st=con.createStatement();
             
-            
-
-            String dropViewSql="DROP VIEW IF EXISTS myview_"+year;
-            String createViewSql="CREATE VIEW myview_"+year+" AS SELECT P2.* "+tempsql;
+            String dropViewSql="DROP VIEW IF EXISTS view"+year+"_"+itemToCount;
+            String createViewSql="CREATE VIEW view"+year+"_"+itemToCount+" AS SELECT P2.* "+tempsql;
+            //System.out.println(createViewSql);
             st.execute(dropViewSql);
             st.execute(createViewSql);
             
+            //Check Is Already Calculated
+            if(QueryResult.containsKey(sql+";"+year))
+            {
+                System.out.println("\t\tCAlCULATING FOR YEAR ENDED :"+year+" On "+new Date());
+                return QueryResult.get(sql+";"+year);
+            }
             ResultSet rs=st.executeQuery(sql);
             if(rs.next())
             {
                 count=rs.getInt(1);
             }
             QueryResult.put(sql+";"+year, count);
+            System.out.println("\t\tCAlCULATING FOR YEAR ENDED :"+year+" On "+new Date());
+
         } catch (ClassNotFoundException | SQLException e) {
             System.err.println(e.getClass().getName()+": "+e.getMessage());
             System.exit(0);
         }
         finally{
             if(con!=null)
-                con.close();
+                try {
+                    con.close();
+            } catch (SQLException ex) {
+                Logger.getLogger(CalculateCount.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
         return count;
     }

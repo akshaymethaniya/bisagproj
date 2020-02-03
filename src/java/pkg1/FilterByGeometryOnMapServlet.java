@@ -43,22 +43,27 @@ public class FilterByGeometryOnMapServlet extends HttpServlet {
         String geometry=(String)request.getAttribute("geometry");
        
         
-        List<Map<String,Integer>> list = new ArrayList<>();
+        List<Map<Object,Object>> list = new ArrayList<>();
+       
         //Running Query For Different Years For Plotting Chart
         int []YEARS={2014,2015,2016,2017,2018,2019};
+        String []COLORS={"#ff3300","#ff9900","#A693BD","#000000","#00cc33","#0099cc"};
+        
         //int []YEARS={2014,2015};
-        System.out.println("POOL SIZE :"+String.valueOf(Runtime.getRuntime().availableProcessors() - 1));
-         ForkJoinPool fjp = new ForkJoinPool();
-         CalculateWithinGeometryForkJoinTask task=new CalculateWithinGeometryForkJoinTask(YEARS.length,ITEM_TO_COUNT,2014, STATE_OSM_ID, parameters, geometry);
-         fjp.invoke(task);
-         for(int i=0;i<YEARS.length;i++)
-         {
-            System.out.println("YEAR : "+YEARS[i]+"\t Count :"+task.COUNTS[i]);
-            Map<String,Integer> map = new HashMap<>();
-            map.put("x", YEARS[i]);
-            map.put("y", task.COUNTS[i]);
-            list.add(map);
-         }
+        //System.out.println("POOL SIZE :"+String.valueOf(Runtime.getRuntime().availableProcessors() - 1));
+        
+        ForkJoinPool fjp = new ForkJoinPool();
+        CalculateForkJoinTask task=new CalculateForkJoinTask(YEARS.length,new CalculateCount(ITEM_TO_COUNT,2014, STATE_OSM_ID, parameters, geometry));
+        fjp.invoke(task);
+        for(int i=0;i<YEARS.length;i++)
+        {
+           System.out.println("YEAR : "+YEARS[i]+"\t Count :"+task.COUNTS[i]);
+           Map<Object,Object> map = new HashMap<>();
+           map.put("x", YEARS[i]);
+           map.put("y", task.COUNTS[i]);
+           map.put("color",COLORS[i]);
+           list.add(map);
+        }
         //Calculated Count Using Thread
         /*CalculateWithinGeometryThread [] cc=new CalculateWithinGeometryThread[YEARS.length]; 
         Thread [] ths=new Thread[YEARS.length];
@@ -91,7 +96,7 @@ public class FilterByGeometryOnMapServlet extends HttpServlet {
         }*/
         //Setting CountList To Request Attribute
         request.setAttribute("countList",list);
-        
+        request.setAttribute("STATE_NAME",States.getStateName(STATE_OSM_ID));
         RequestDispatcher rd=request.getRequestDispatcher("StateWiseAnalysisResult.jsp"); 
         rd.forward(request, response);
     }

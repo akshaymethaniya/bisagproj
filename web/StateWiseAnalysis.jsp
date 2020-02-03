@@ -18,6 +18,9 @@
         select{
             display: block;
         }
+        td{
+            width:50%;
+        }
     </style>
     <script>
         function addProperty()
@@ -63,7 +66,7 @@
         <form action="LoadInitDataForStateWiseAnalysis" style="padding:10px;" method="get" class="w3-container w3-card-4 w3-light-grey">
             <table id="mytable">
                 <tr>
-                    <td>
+                    <td >
                         <select class="w3-select w3-border" name="state_osm_id">
                             <option value="" disabled selected>Choose State</option>
                                 <c:forEach items="${stateMap}" var="state">
@@ -79,10 +82,8 @@
                                 </c:forEach>
                         </select>
                     </td>
-                </tr>
-                <tr>
-                    <td>
-                        <select name="itemToCount"  class="w3-select w3-border"  id="itemToCount">
+                    <td>        
+                        <select name="itemToCount"  class="w3-select w3-border"  id="itemToCount" <c:if test="${not empty propertiesList}"></c:if>>
                             <option value="" disabled selected>Choose Table</option>
                             <c:forEach items="${ITEMS_TO_COUNT}" var="item">
                                 <c:set var="i2" value="${item}"></c:set>
@@ -98,6 +99,7 @@
                         </select>
                     </td>
                 </tr>
+                
             <c:choose>
                 <c:when test="${not empty propertiesList}">
                     <tr>

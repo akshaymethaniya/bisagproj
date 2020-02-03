@@ -19,7 +19,14 @@ import java.util.Map;
  */
 public class States {
     public static Map<String,String> stateMap=new LinkedHashMap<String,String>();
-    
+    public static String getStateName(String STATE_OSM_ID)
+    {
+        if(stateMap.isEmpty())
+        {
+            getStates();
+        }
+        return stateMap.get(STATE_OSM_ID);
+    }
     public static Map<String,String> getStates() 
     {
         if(!stateMap.isEmpty())
