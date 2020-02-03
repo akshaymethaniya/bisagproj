@@ -11,6 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,8 +25,8 @@ public class Properties {
     public static List<String> COLUMNS=new ArrayList<String>();
     public static List<String> TABLES=new ArrayList<String>();
     
-    private static String USERNAME="postgres";
-    private static String PASSWORD="postgres";
+    private static final String USERNAME="postgres";
+    private static final String PASSWORD="postgres";
     
     private static void initilize(){
         TABLES.add("planet_osm_point");
@@ -43,7 +44,7 @@ public class Properties {
             case "LINES":
                 TABLE_NAME="planet_osm_line";
                 break;
-            case "POLYGON":
+            case "POLYGONS":
                 TABLE_NAME="planet_osm_polygon";
                 break;
             default:
@@ -89,13 +90,14 @@ public class Properties {
                         "WHERE table_name   = '"+tableName+"'";
             rs=st.executeQuery(sql);
             while(rs.next()){
-                properties.add(rs.getString(1));
+                if(!rs.getString(1).equals("way") && !rs.getString(1).equals("way1"))
+                    properties.add(rs.getString(1));
             }
+            Collections.sort(properties);
             table_properties.put(tableName, properties);
             
-        }catch(Exception e)
+        }catch(ClassNotFoundException | SQLException e)
         {
-            e.printStackTrace();
             System.err.println(e.getClass().getName()+": "+e.getMessage());
             System.exit(0);
         }finally {

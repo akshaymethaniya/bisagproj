@@ -45,6 +45,22 @@
             var chart ;
             var dps;
             var QueryResult=[];
+            
+            var ajax = new XMLHttpRequest();
+            ajax.open("GET", "http://localhost:8080/geoserver/bisag/view2019_lines/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities", true);
+            ajax.onreadystatechange = function () {
+              if (ajax.readyState === 4 && ajax.status === 200)
+              {
+                var parser = new DOMParser();
+                var xmlDoc = parser.parseFromString(ajax.responseText,"text/xml");
+                var ats=xmlDoc.getElementsByTagName("LatLonBoundingBox")[0].attributes;
+                var x=(parseFloat(ats.minx.value)+parseFloat(ats.maxx.value))/2;
+                var y=(parseFloat(ats.miny.value)+parseFloat(ats.maxy.value))/2;
+                console.log(y);
+                console.log(x);
+              }
+            };
+            ajax.send();
             function applyColors()
             {
                 //QueryResult[0]   -- > For 2019
@@ -64,26 +80,51 @@
                 chart.render();
                 
             }
+            function applyCQLFilter()
+            {
+                var cql=document.getElementById('cql_filter');
+                for(var i=0;i<QueryResult.length;i++)
+                    QueryResult[i].setParams({cql_filter :cql.value});
+            }
             window.onload = function() 
             { 
                 <% 
                         String []st=new String[6];
+                        String []lyr=new String[6];
                         if (request.getAttribute("ITEM_TO_COUNT").toString().equals("POINTS")){
                           String prefix="bisag:style_point_";
+                          String prefix_lyr="bisag:view";
+                          String suffix_lyr="_points";
                           int i;
                           for(i=2014;i<=2019;i++)
                           {
                               st[i-2014]=prefix+String.valueOf(i);
+                              lyr[i-2014]=prefix_lyr+String.valueOf(i)+suffix_lyr;
                           }
                         }
-                        else
+                        else if (request.getAttribute("ITEM_TO_COUNT").toString().equals("LINES"))
                         {
                             String prefix="bisag:style_line_";
+                            String prefix_lyr="view";
+                            String suffix_lyr="_lines";
                             int i;
                             for(i=2014;i<=2019;i++)
-                          {
-                              st[i-2014]=prefix+String.valueOf(i);
-                          }
+                            {
+                                st[i-2014]=prefix+String.valueOf(i);
+                                lyr[i-2014]=prefix_lyr+String.valueOf(i)+suffix_lyr;
+                            }
+                        }
+                        else if (request.getAttribute("ITEM_TO_COUNT").toString().equals("POLYGONS"))
+                        {
+                            String prefix="bisag:style_polygon_";
+                            String prefix_lyr="view";
+                            String suffix_lyr="_polygons";
+                            int i;
+                            for(i=2014;i<=2019;i++)
+                            {
+                                st[i-2014]=prefix+String.valueOf(i);
+                                lyr[i-2014]=prefix_lyr+String.valueOf(i)+suffix_lyr;
+                            }
                         }
                 %>
 
@@ -94,7 +135,7 @@
                             animationEnabled: true,
                             exportEnabled: true,
                             title: {
-                                    text: "GROWTH" 
+                                    text: "NO. OF RESULTS" 
                             },
                             axisX: {						
                                     title: "YEAR"
@@ -117,7 +158,8 @@
                             cursor: true
                     }).setView([22.74312,72],7);
                     
-
+                    
+                    
                     var marker=null;
                     var osmGeocoder = new L.Control.OSMGeocoder({
                         collapsed: false,
@@ -156,7 +198,7 @@
                     });
                     map.addControl(osmGeocoder);
         
-                      var drawnItems = new L.FeatureGroup();
+                    var drawnItems = new L.FeatureGroup();
                     map.addLayer(drawnItems);
                     
 
@@ -271,13 +313,13 @@
                         drawnItems.addLayer(layer);
                     });
                     
-                    if('${latlngs}')
+                    /*if('${latlngs}')
                     {
                         var latlngs=JSON.parse('${latlngs}');
                         console.log(latlngs);
                         var polygon = L.polygon(latlngs, {color: 'red'}).addTo(map);
                         map.fitBounds(polygon.getBounds());
-                    }
+                    }*/
 
                     
                     var basicMap=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -289,42 +331,42 @@
 
                     
                     QueryResult[2019-2019]=L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
-                            layers: 'bisag:myview_2019',
+                            layers: '<%=lyr[5]%>',
                             transparent:true,
                             styles:'<%=st[5]%>',
                             format:'image/png'
                     });
                     QueryResult[2019-2018]=L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
-                            layers: 'bisag:myview_2018',
+                            layers: '<%=lyr[4]%>',
                             transparent:true,
                             styles:'<%=st[4]%>',
                             format:'image/png'
                     });
                     QueryResult[2019-2017]=L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
-                            layers: 'bisag:myview_2017',
+                            layers: '<%=lyr[3]%>',
                             transparent:true,
                             styles:'<%=st[3]%>',
                             format:'image/png'
                     });
                     QueryResult[2019-2016]=L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
-                            layers: 'bisag:myview_2016',
+                            layers: '<%=lyr[2]%>',
                             transparent:true,
                             styles:'<%=st[2]%>',
                             format:'image/png'
                     });
                     QueryResult[2019-2015]=L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
-                            layers: 'bisag:myview_2015',
+                            layers: '<%=lyr[1]%>',
                             transparent:true,
                             styles:'<%=st[1]%>',
                             format:'image/png'
                     });
                     QueryResult[2019-2014]=L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
-                            layers: 'bisag:myview_2014',
+                            layers: '<%=lyr[0]%>',
                             transparent:true,
                             styles:'<%=st[0]%>',
                             format:'image/png'
                             
-                    });
+                    }).addTo(map);
                     var overlayLayers={
                             "Query Result-2019":QueryResult[2019-2019],
                             "Query Result-2018":QueryResult[2019-2018],
@@ -340,7 +382,6 @@
                         ).addTo(map);
                     L.control.scale().addTo(map);
                     
-                   
                     map.clicked = 0;                                                                      
                     map.on('click', function(e) {
                         //console.log(chart);
@@ -362,7 +403,7 @@
                             if(layers.length === 0)
                                 return;
                             //console.log(layers.toString());
-                            //console.log("Lat, Lon : " + e.latlng.lat + ", " + e.latlng.lng);
+                            console.log("Lat, Lon : " + e.latlng.lat + ", " + e.latlng.lng);
                             if(map.isFullscreen())
                             {        
                                 alert('Closing The Full Screen Mode To View The Features List');
@@ -409,7 +450,17 @@
                             fetch(URL)
                               .then((response) => response.text())
                               .then((html) => {
-                                document.getElementById('info').innerHTML = html;
+                                  var el = document.createElement( 'html' );
+                                  el.innerHTML=html;
+                                  
+                                  var header= '<h2>PROPERTIES</h2>';
+                                  //var filter='<input type="text" style="width:30%;" placeholder="Enter CQL Filter" class="w3-input w3-border w3-round w3-animate-input" id="cql_filter">';    
+                                  //var apply_button='<input type="button" class="w3-btn w3-teal" id="applyCqlFilter" name="applyFilter" onclick="applyCQLFilter()" value="Apply Filter">';
+                                  /*if(el.getElementsByTagName('table').length)
+                                    document.getElementById('info').innerHTML = header+filter+'<br>'+apply_button+'<br><br>'+ html;
+                                  else*/
+                                  document.getElementById('info').innerHTML = header+html;
+
                               });
                             }
                         }, 300);
@@ -429,9 +480,8 @@
                         height: 100%;
                         margin: 10px;
                 }
-            #map {
-                        
-                        height: 400px;
+            #map {       
+                 height: 400px;
             }
             input[type="color"] {
                 padding:0px;
@@ -442,8 +492,8 @@
     <body >
         <div style="padding: 20px;border:2px solid;">
             <form action="LoadInitDataForStateWiseAnalysis" method="get" id="myform">
-            <div >
-                <table style="float:left;">
+            <div>
+                <table class="w3-table w3-border w3-responsive w3-card-4">
                     <tr>
                         <td><input type="color" id="color_2014" value="#ff3300"></td>
                         <td>2014</td>
@@ -458,8 +508,10 @@
                         <td><input type="color" id="color_2019" value="#0099cc"></td>
                         <td>2019</td>
                     </tr>
+                    
                 </table>
-                <table style="float:right;"> 
+                <br>
+                <table>
                     <tr>
                         <td>
                             <input type="button" class="w3-btn w3-teal" id="applyCs" onclick="applyColors()" name="applyCs" value="Apply Colors">
@@ -467,35 +519,52 @@
                         <td>
                             <input type="submit" class="w3-btn w3-teal" id="filterByGeometry" name="filterByGeometry" value="Filter" disabled="true">
                         </td>
-
                     </tr>
                 </table>
-            </div>
+                <div>
+                    <h2 style="text-transform: uppercase;">Analysis Of <b>${STATE_NAME}</b></h2>
+                    <h3 style="text-transform: uppercase;"><b>Properties</b> Applied</h3>
+                    <table class="w3-table w3-border w3-responsive w3-card-4">
+                        <c:forEach items="${propsMapForQuery}" var="prop">
+                            <tr>
+                                <td style="text-transform: uppercase;"><b>${prop.getKey()}</b></td>
+                                <td>:</td>
+                                <td style="text-transform: uppercase;">${prop.getValue()[0]}</td>
+                            </tr>
+                        </c:forEach>
+                    </table>
+                </div>
+                    <br>
+                    <input type="text" style="width:30%;" placeholder="Enter CQL Filter (Map Only)" class="w3-input w3-border w3-round w3-animate-input" id="cql_filter">
+                    <br>
+                    <input type="button" class="w3-btn w3-teal" id="applyCqlFilter" name="applyFilter" onclick="applyCQLFilter()" value="Apply Filter">
+
                 
+            </div>
             <div style="float:left;width:40%;height:100%;">
-                <h1>Chart</h1>
-                <div id="chartContainer"style="width:100%;height: 100%;" ></div>
-            </div>
-            <div style="width:60%;height: 70%;float:right;">
-                    <input type="hidden" name="state_osm_id" value="${STATE_OSM_ID}">
-                    <input type="hidden" name="itemToCount" value="${ITEM_TO_COUNT}">
-                    <c:forEach items="${propsMapForQuery}" var="prop">
-                        <input type="hidden" name="${prop.key}" value="${prop.value[0]}">
-                    </c:forEach>
-
-                    <div>
-                        <h1>Map</h1>              
-                        <div id="map">
+                    <h1>Chart</h1>
+                    <div id="chartContainer"style="width:100%;height: 100%;" ></div>
+                </div>
+                <div style="width:60%;height: 70%;float:right;">
+                        <input type="hidden" name="state_osm_id" value="${STATE_OSM_ID}">
+                        <input type="hidden" name="itemToCount" value="${ITEM_TO_COUNT}">
+                        <c:forEach items="${propsMapForQuery}" var="prop">
+                            <input type="hidden" name="${prop.key}" value="${prop.value[0]}">
+                        </c:forEach>
+                        
+                        <div>
+                            <h1>Map</h1>
+                            <div id="map">
+                            </div>
                         </div>
-                    </div>
 
-            </div>
-            <div id="info" style="width:100%;height:auto;overflow-x: scroll;">
+                </div>
+                <div id="info" style="width:100%;height:auto;overflow-x: scroll;">
 
-            </div>
+                </div>
+            
             </form>
         </div>
         <script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
     </body>
 </html>
-

@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ForkJoinPool;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -39,6 +40,29 @@ public class StateWiseAnalysisServlet extends HttpServlet {
         String ITEM_TO_COUNT=(String)request.getAttribute("ITEM_TO_COUNT");
         Map<String,String[]> parameters=(Map<String,String[]>)request.getAttribute("propsMapForQuery");
        
+        
+        List<Map<Object,Object>> list = new ArrayList<>();
+        
+        //FORK JOIN METHOD
+        int []YEARS={2014,2015,2016,2017,2018,2019};
+        String []COLORS={"#ff3300","#ff9900","#A693BD","#000000","#00cc33","#0099cc"};
+
+        //int []YEARS={2014,2015};
+        System.out.println("POOL SIZE :"+String.valueOf(Runtime.getRuntime().availableProcessors() - 1));
+        ForkJoinPool fjp = new ForkJoinPool();
+        CalculateForkJoinTask task=new CalculateForkJoinTask(YEARS.length,new CalculateCount(ITEM_TO_COUNT,2014, STATE_OSM_ID, parameters));
+        fjp.invoke(task);
+        for(int i=0;i<YEARS.length;i++)
+        {
+           System.out.println("YEAR : "+YEARS[i]+"\t Count :"+task.COUNTS[i]);
+           Map<Object,Object> map = new HashMap<>();
+           map.put("x", YEARS[i]);
+           map.put("y", task.COUNTS[i]);
+           map.put("color",COLORS[i]);
+           list.add(map);
+        }
+        
+        /* BRUTE FORCE METHOD
         //Running Query For Different Years For Plotting Chart
         List<Map<Object,Object>> list = new ArrayList<>();
         try{
@@ -48,7 +72,7 @@ public class StateWiseAnalysisServlet extends HttpServlet {
             {
                 Map<Object,Object> map = new HashMap<>();
 
-                int count=CalculateCount.calculate(ITEM_TO_COUNT,YEARS[i],STATE_OSM_ID,parameters);
+                int count=new CalculateCount(ITEM_TO_COUNT,YEARS[i],STATE_OSM_ID,parameters).calculate();
                 //out.println("YEAR : "+YEARS[i]);
                 //out.println("\t"+ITEM_TO_COUNT+" : "+count);
                 //out.println("<br>");
@@ -60,8 +84,12 @@ public class StateWiseAnalysisServlet extends HttpServlet {
         }catch(SQLException e){
             System.out.println(e.getMessage());
         }
+        
+        */
+        
         //Setting CountList To Request Attribute
         request.setAttribute("countList",list);
+        request.setAttribute("STATE_NAME",States.getStateName(STATE_OSM_ID));
         RequestDispatcher rd=request.getRequestDispatcher("StateWiseAnalysisResult.jsp"); 
         rd.forward(request, response);
 

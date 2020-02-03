@@ -78,7 +78,7 @@ public class LoadInitDataForStateWiseAnalysis extends HttpServlet {
             //Removing Other Parameters And Setting Request Attribute
             List<String> allProps=Properties.getProperties(Properties.MapToTable(ITEM_TO_COUNT));
             request.setAttribute("propsMapForQuery",getPropertiesFromParameters(request.getParameterMap(),allProps));
-            
+            //System.out.println(getPropertiesFromParameters(request.getParameterMap(),allProps).toString());
             toForward="StateWiseAnalysisServlet";
         }
         else if(request.getParameter("filterByGeometry")!=null)
