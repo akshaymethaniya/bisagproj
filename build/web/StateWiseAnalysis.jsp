@@ -4,6 +4,7 @@
     Author     : FOR ORACLE
 --%>
 
+<%@page import="pkg1.Properties"%>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
@@ -22,7 +23,9 @@
             width:50%;
         }
     </style>
+    <script type="text/javascript" src="./props_vals.js"></script>
     <script>
+        console.log(data);
         function addProperty()
                 {
                     var tableRef =document.getElementById('mytable').getElementsByTagName('tbody')[0];
@@ -47,7 +50,6 @@
                     input.value= "Anything";
                     input.placeholder="Enter Value Of "+text;
                     newCell_1.appendChild(input);
-
                     newCell_2.innerHTML = '<button type="button" id="'+text+'" onclick="removeProperty(this)">Remove</button>';
                     newRow.id=text;
                 }
@@ -118,6 +120,7 @@
                             <input type="submit" class="w3-btn w3-teal" style="width: 100%;" name="filter" value="View Result">
                         </td>
                     </tr>
+                    
                 </c:when>
                 <c:otherwise>
                     <tr>
@@ -125,6 +128,7 @@
                             <input type="submit" class="w3-btn w3-teal" style="width: 100%;" name="loadProperties" value="Load Properties">
                         </td>
                     </tr>
+                   
                 </c:otherwise>
             </c:choose>
             </table>

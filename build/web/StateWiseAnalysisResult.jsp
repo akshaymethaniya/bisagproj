@@ -91,6 +91,7 @@
                 <% 
                         String []st=new String[6];
                         String []lyr=new String[6];
+                        String []COLORS={"ff3300","ff9900","A693BD","000000","00cc33","0099cc"};
                         if (request.getAttribute("ITEM_TO_COUNT").toString().equals("POINTS")){
                           String prefix="bisag:style_point_";
                           String prefix_lyr="bisag:view";
@@ -104,13 +105,13 @@
                         }
                         else if (request.getAttribute("ITEM_TO_COUNT").toString().equals("LINES"))
                         {
-                            String prefix="bisag:style_line_";
+                            String prefix="bisag:style_line";
                             String prefix_lyr="view";
                             String suffix_lyr="_lines";
                             int i;
                             for(i=2014;i<=2019;i++)
                             {
-                                st[i-2014]=prefix+String.valueOf(i);
+                                st[i-2014]=prefix;
                                 lyr[i-2014]=prefix_lyr+String.valueOf(i)+suffix_lyr;
                             }
                         }
@@ -334,36 +335,42 @@
                             layers: '<%=lyr[5]%>',
                             transparent:true,
                             styles:'<%=st[5]%>',
+                            env: 'color:'+'<%=COLORS[5]%>',
                             format:'image/png'
                     });
                     QueryResult[2019-2018]=L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
                             layers: '<%=lyr[4]%>',
                             transparent:true,
                             styles:'<%=st[4]%>',
+                            env: 'color:'+'<%=COLORS[4]%>',
                             format:'image/png'
                     });
                     QueryResult[2019-2017]=L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
                             layers: '<%=lyr[3]%>',
                             transparent:true,
                             styles:'<%=st[3]%>',
+                            env: 'color:'+'<%=COLORS[3]%>',
                             format:'image/png'
                     });
                     QueryResult[2019-2016]=L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
                             layers: '<%=lyr[2]%>',
                             transparent:true,
                             styles:'<%=st[2]%>',
+                            env: 'color:'+'<%=COLORS[2]%>',
                             format:'image/png'
                     });
                     QueryResult[2019-2015]=L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
                             layers: '<%=lyr[1]%>',
                             transparent:true,
                             styles:'<%=st[1]%>',
+                            env: 'color:'+'<%=COLORS[1]%>',
                             format:'image/png'
                     });
                     QueryResult[2019-2014]=L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
                             layers: '<%=lyr[0]%>',
                             transparent:true,
                             styles:'<%=st[0]%>',
+                            env: 'color:'+'<%=COLORS[0]%>',
                             format:'image/png'
                             
                     }).addTo(map);
@@ -524,6 +531,7 @@
                 <div>
                     <h2 style="text-transform: uppercase;">Analysis Of <b>${STATE_NAME}</b></h2>
                     <h3 style="text-transform: uppercase;"><b>Properties</b> Applied</h3>
+                    
                     <table class="w3-table w3-border w3-responsive w3-card-4">
                         <c:forEach items="${propsMapForQuery}" var="prop">
                             <tr>
