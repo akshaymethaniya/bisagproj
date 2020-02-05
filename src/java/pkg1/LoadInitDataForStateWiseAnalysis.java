@@ -5,14 +5,16 @@
  */
 package pkg1;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.http.HttpServlet;
@@ -55,6 +57,9 @@ public class LoadInitDataForStateWiseAnalysis extends HttpServlet {
         ITEMS_TO_COUNT.add("LINES");
         ITEMS_TO_COUNT.add("POLYGONS");
         
+        ServletContext context =request.getServletContext();
+        String path_propsVals = context.getRealPath("/WEB-INF/props_vals.json");
+        //System.out.println("PATH:"+fullPath);
         
         
         request.setAttribute("STATE_OSM_ID",STATE_OSM_ID);
@@ -68,6 +73,7 @@ public class LoadInitDataForStateWiseAnalysis extends HttpServlet {
         String toForward="StateWiseAnalysis.jsp";
         if(request.getParameter("loadProperties")!=null)
         {
+            
             request.setAttribute("ITEMS_TO_COUNT",ITEMS_TO_COUNT);
             request.setAttribute("stateMap",States.getStates());
             request.setAttribute("propertiesList",Properties.getProperties(Properties.MapToTable(ITEM_TO_COUNT)));
