@@ -12,6 +12,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import static pkg1.PostgreSqlConnectionData.HOST;
+import static pkg1.PostgreSqlConnectionData.PASSWORD;
+import static pkg1.PostgreSqlConnectionData.USERNAME;
 
 /**
  *
@@ -38,7 +41,7 @@ public class States {
         try
         {
             Class.forName("org.postgresql.Driver");
-            con = DriverManager.getConnection("jdbc:postgresql://localhost:5432/osmdata-2019","akshay", "akshay");
+            con = DriverManager.getConnection("jdbc:postgresql://"+HOST+"/osmdata-2014",USERNAME,PASSWORD);
            Statement st=con.createStatement();
            String sql="SELECT DISTINCT name,osm_id FROM planet_osm_polygon WHERE admin_level ='4' and name IS NOT NULL ORDER BY name";
            ResultSet rs=st.executeQuery(sql);           

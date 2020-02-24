@@ -40,13 +40,18 @@ public class FilterByGeometryOnMapServlet extends HttpServlet {
         String STATE_OSM_ID=(String)request.getAttribute("STATE_OSM_ID");
         String ITEM_TO_COUNT=(String)request.getAttribute("ITEM_TO_COUNT");
         Map<String,String[]> parameters=(Map<String,String[]>)request.getAttribute("propsMapForQuery");
-        String geometry=(String)request.getAttribute("geometry");
-       
+        String []geometry=(String [])request.getAttribute("geometry");
+        int []YEARS=(int [])request.getAttribute("YEARS");
+       for(String geo:geometry)
+            {
+                System.out.println(geo);
+                System.out.println();
+                System.out.println();
+            }
         
         List<Map<Object,Object>> list = new ArrayList<>();
        
         //Running Query For Different Years For Plotting Chart
-        int []YEARS={2014,2015,2016,2017,2018,2019};
         String []COLORS={"#ff3300","#ff9900","#A693BD","#000000","#00cc33","#0099cc"};
         
         //int []YEARS={2014,2015};
@@ -96,6 +101,7 @@ public class FilterByGeometryOnMapServlet extends HttpServlet {
         }*/
         //Setting CountList To Request Attribute
         request.setAttribute("countList",list);
+        //request.setAttribute("YEARS", YEARS);
         request.setAttribute("STATE_NAME",States.getStateName(STATE_OSM_ID));
         RequestDispatcher rd=request.getRequestDispatcher("StateWiseAnalysisResult.jsp"); 
         rd.forward(request, response);

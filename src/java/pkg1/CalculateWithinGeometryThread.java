@@ -13,6 +13,9 @@ import java.sql.Statement;
 import java.util.Map;
 import static pkg1.CalculateCount.MapToTable;
 import static pkg1.CalculateCount.getDBName;
+import static pkg1.PostgreSqlConnectionData.HOST;
+import static pkg1.PostgreSqlConnectionData.PASSWORD;
+import static pkg1.PostgreSqlConnectionData.USERNAME;
 
 /**
  *
@@ -20,8 +23,6 @@ import static pkg1.CalculateCount.getDBName;
  */
 public class CalculateWithinGeometryThread  extends Thread{
     private static final String DB_PREFIX="osmdata-";
-    private static final String USERNAME="postgres";
-    private static final String PASSWORD="postgres";
     
     String itemToCount;
     int year;
@@ -82,7 +83,7 @@ public class CalculateWithinGeometryThread  extends Thread{
         {
             Class.forName("org.postgresql.Driver");
             con = DriverManager
-               .getConnection("jdbc:postgresql://localhost:5432/"+DBNAME,USERNAME,PASSWORD);
+               .getConnection("jdbc:postgresql://"+HOST+"/"+DBNAME,USERNAME,PASSWORD);
             
             st=con.createStatement();
             

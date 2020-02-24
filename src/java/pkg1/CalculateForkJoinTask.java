@@ -23,7 +23,7 @@ public class CalculateForkJoinTask extends RecursiveTask<Integer>{
     }
     @Override
     protected Integer compute() {
-        if(this.totalYears > 1)
+        if(this.totalYears > 0)
         {
             System.out.println("Splitting Task For Each Year");
             CalculateForkJoinTask [] subtasks = new CalculateForkJoinTask[this.totalYears];
@@ -31,9 +31,9 @@ public class CalculateForkJoinTask extends RecursiveTask<Integer>{
             {
                 
                 if(cc.geometry!=null)
-                    subtasks[i]= new CalculateForkJoinTask(1,new CalculateCount(cc.itemToCount,2014+i,cc.STATE_OSM_ID,cc.parameters,cc.geometry));                
+                    subtasks[i]= new CalculateForkJoinTask(0,new CalculateCount(cc.itemToCount,2014+i,cc.STATE_OSM_ID,cc.parameters,cc.geometry));                
                 else
-                    subtasks[i]= new CalculateForkJoinTask(1,new CalculateCount(cc.itemToCount,2014+i,cc.STATE_OSM_ID,cc.parameters));                
+                    subtasks[i]= new CalculateForkJoinTask(0,new CalculateCount(cc.itemToCount,2014+i,cc.STATE_OSM_ID,cc.parameters));                
             }
             for(int i=0;i<this.totalYears;i++)
             {
