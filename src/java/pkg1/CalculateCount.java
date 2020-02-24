@@ -15,6 +15,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import static pkg1.PostgreSqlConnectionData.HOST;
+import static pkg1.PostgreSqlConnectionData.PASSWORD;
+import static pkg1.PostgreSqlConnectionData.USERNAME;
 
 /**
  *
@@ -23,15 +26,14 @@ import java.util.logging.Logger;
 public class CalculateCount  {
     public static Map<String,Integer> QueryResult=new HashMap<String,Integer>();
     private static final String DB_PREFIX="osmdata-";
-    private static final String USERNAME="postgres";
-    private static final String PASSWORD="postgres";
+    
     String itemToCount;
     int year;
     String STATE_OSM_ID;
     Map<String, String[]> parameters;
-    String geometry=null;
+    String []geometry;
 
-    public CalculateCount(String itemToCount, int year, String STATE_OSM_ID, Map<String, String[]> parameters, String geometry) {
+    public CalculateCount(String itemToCount, int year, String STATE_OSM_ID, Map<String, String[]> parameters, String []geometry) {
         this.itemToCount = itemToCount;
         this.year = year;
         this.STATE_OSM_ID = STATE_OSM_ID;
@@ -64,7 +66,7 @@ public class CalculateCount  {
         String WHERE_PART="WHERE ";
         for(Map.Entry<String,String []> entry:parameters.entrySet())
         {
-            if(entry.getValue()[0].equals("Anything"))
+            if(entry.getValue()[0].equals("*"))
             {
                 WHERE_PART+=entry.getKey()+" IS NOT NULL AND ";
             }
@@ -73,22 +75,31 @@ public class CalculateCount  {
                 WHERE_PART+=entry.getKey()+" = '"+entry.getValue()[0]+"' AND ";
             }
         }
-        WHERE_PART+=
-                " way1 && "+
+        WHERE_PART+="( ";
+        for(int i=0;i<geometry.length;i++)
+        {
+            WHERE_PART+=
+                "ST_Transform(way,4326) && "+
                 "'"+
                 "LINESTRING("+
-                ParseGeometryObject.getCoordinates(geometry)+
+                ParseGeometryObject.getCoordinates(geometry[i])+
                 ")'"+
-                "::geometry";
-        String sql=SELECT_PART+FROM_PART+WHERE_PART;
+                "::geometry ";
+            if(i!=geometry.length-1)
+                WHERE_PART+="OR ";
+            if(i==geometry.length-1)
+                WHERE_PART+=")";
+        }
         
+        String sql=SELECT_PART+FROM_PART+WHERE_PART;
+        System.out.println(sql);
         
        
         try
         {
             Class.forName("org.postgresql.Driver");
             con = DriverManager
-               .getConnection("jdbc:postgresql://localhost:5432/"+DBNAME,USERNAME,PASSWORD);
+               .getConnection("jdbc:postgresql://"+HOST+"/"+DBNAME,USERNAME,PASSWORD);
             
             st=con.createStatement();
             
@@ -164,7 +175,7 @@ public class CalculateCount  {
 
         for(Map.Entry<String,String []> entry:parameters.entrySet())
         {
-            if(entry.getValue()[0].equals("Anything"))
+            if(entry.getValue()[0].equals("*"))
             {
                 WHERE_PART+="P2."+entry.getKey()+" IS NOT NULL AND ";
             }
@@ -202,7 +213,7 @@ public class CalculateCount  {
             
             Class.forName("org.postgresql.Driver");
             con = DriverManager
-               .getConnection("jdbc:postgresql://localhost:5432/"+DBNAME,USERNAME,PASSWORD);
+               .getConnection("jdbc:postgresql://"+HOST+"/"+DBNAME,USERNAME,PASSWORD);
             
             Statement st=con.createStatement();
             
@@ -215,7 +226,7 @@ public class CalculateCount  {
             //Check Is Already Calculated
             if(QueryResult.containsKey(sql+";"+year))
             {
-                System.out.println("\t\tCAlCULATING FOR YEAR ENDED :"+year+" On "+new Date());
+                System.out.println("\t\tOUTPUT FROM STATIC VAR : CAlCULATING FOR YEAR ENDED :"+year+" On "+new Date());
                 return QueryResult.get(sql+";"+year);
             }
             ResultSet rs=st.executeQuery(sql);

@@ -12,6 +12,8 @@
 <%@ page import="com.google.gson.JsonObject"%>
 <%@page import="pkg1.Properties"%>
 <%
+    //int  []YEARS={2014,2015,2016,2017,2018,2019}; 
+    int []YEARS=(int [])request.getAttribute("YEARS");
     String dataPoints = null;
     boolean displayChart=false;
     if(request.getAttribute("STATE_OSM_ID")!="")
@@ -38,14 +40,16 @@
         <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
         <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
         <script src="https://rawgit.com/k4r573n/leaflet-control-osm-geocoder/master/Control.OSMGeocoder.js"></script>
-	<link rel="stylesheet" href="https://rawgit.com/k4r573n/leaflet-control-osm-geocoder/master/Control.OSMGeocoder.css" />
+	
+        <link rel="stylesheet" href="https://rawgit.com/k4r573n/leaflet-control-osm-geocoder/master/Control.OSMGeocoder.css" />
         <script src="./leaflet-provider.js"></script>
         <script type="text/javascript">
             var map;
             var chart ;
             var dps;
             var QueryResult=[];
-            
+           var custom_polygon;
+            var layer=null;
             var ajax = new XMLHttpRequest();
             ajax.open("GET", "http://localhost:8080/geoserver/bisag/view2019_lines/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities", true);
             ajax.onreadystatechange = function () {
@@ -63,11 +67,11 @@
             ajax.send();
             function applyColors()
             {
-                //QueryResult[0]   -- > For 2019
+                //QueryResult[0]   -- > For 2014 
                 //dps[0] --> For 2014
                 for(var i=0;i<QueryResult.length;i++)
                 {
-                    var c=document.getElementById('color_'+(2019-i)).value;
+                    var c=document.getElementById('color_'+(2014+i)).value;
                     QueryResult[i].setParams({env: 'color:'+c.substr(1,c.length)});
                     
                 }
@@ -89,18 +93,18 @@
             window.onload = function() 
             { 
                 <% 
-                        String []st=new String[6];
-                        String []lyr=new String[6];
+                        String []st=new String[YEARS.length];
+                        String []lyr=new String[YEARS.length];
                         String []COLORS={"ff3300","ff9900","A693BD","000000","00cc33","0099cc"};
                         if (request.getAttribute("ITEM_TO_COUNT").toString().equals("POINTS")){
-                          String prefix="bisag:style_point_";
+                          String prefix="bisag:style_point";
                           String prefix_lyr="bisag:view";
                           String suffix_lyr="_points";
                           int i;
-                          for(i=2014;i<=2019;i++)
+                          for(int year:YEARS)
                           {
-                              st[i-2014]=prefix+String.valueOf(i);
-                              lyr[i-2014]=prefix_lyr+String.valueOf(i)+suffix_lyr;
+                              st[year-2014]=prefix;
+                              lyr[year-2014]=prefix_lyr+String.valueOf(year)+suffix_lyr;
                           }
                         }
                         else if (request.getAttribute("ITEM_TO_COUNT").toString().equals("LINES"))
@@ -109,22 +113,27 @@
                             String prefix_lyr="view";
                             String suffix_lyr="_lines";
                             int i;
-                            for(i=2014;i<=2019;i++)
+                            Map<String,String[]> propsMapForQuery=(Map<String,String[]>) request.getAttribute("propsMapForQuery");
+                            if(!propsMapForQuery.containsKey("highway"))
                             {
-                                st[i-2014]=prefix;
-                                lyr[i-2014]=prefix_lyr+String.valueOf(i)+suffix_lyr;
+                                prefix="bisag:style_line1";
+                            }
+                          for(int year:YEARS)
+                            {
+                                st[year-2014]=prefix;
+                                lyr[year-2014]=prefix_lyr+String.valueOf(year)+suffix_lyr;
                             }
                         }
                         else if (request.getAttribute("ITEM_TO_COUNT").toString().equals("POLYGONS"))
                         {
-                            String prefix="bisag:style_polygon_";
+                            String prefix="bisag:style_polygon";
                             String prefix_lyr="view";
                             String suffix_lyr="_polygons";
                             int i;
-                            for(i=2014;i<=2019;i++)
+                          for(int year:YEARS)
                             {
-                                st[i-2014]=prefix+String.valueOf(i);
-                                lyr[i-2014]=prefix_lyr+String.valueOf(i)+suffix_lyr;
+                                st[year-2014]=prefix;
+                                lyr[year-2014]=prefix_lyr+String.valueOf(year)+suffix_lyr;
                             }
                         }
                 %>
@@ -188,6 +197,9 @@
                                             {title: display_name }
                                             )
                                            .addTo(map);
+                                marker.on('click',function(e){
+                                map.removeLayer(marker); 
+                                });
                                 this._map.fitBounds(bounds);
                             }
                             else
@@ -244,7 +256,6 @@
                     });
                     //console.log(drawnItems.getBounds());
                     map.addControl(drawControl);
-                    var layer=null;
                     map.on('draw:deleted',function(e){
                         layer=null;
                         var filterButton=document.getElementById("filterByGeometry");
@@ -257,27 +268,27 @@
 
                     });
                     map.on('draw:created', function (e) {
-                        if(layer !== null)
+                        /*if(layer !== null)
                         {
                             alert('You can draw only one Geometry For Filter');
                             drawnItems.removeLayer(layer);
-                        }    
+                        } */   
                         var type = e.layerType;
                             layer = e.layer;
-                            console.log(layer);
-                            console.log(layer.toGeoJSON());
+                            //console.log(layer);
+                            //console.log(layer.toGeoJSON());
                             if(type === 'polygon' || type === 'rectangle')
                             {
                                 // here you got the polygon points
                                 //console.log(layer);
                                 var points = layer._latlngs;
-                                console.log('Points'+points);
+                                //console.log('Points'+points);
                                 // here you can get it in geojson format
                                 var geojson = layer.toGeoJSON();
-                                console.log(JSON.stringify(geojson));
+                                //console.log(JSON.stringify(geojson));
                                 var geoJsonLayer = L.geoJson(geojson);
                                 //console.log("SOUTH WEST : "+geoJsonLayer.getBounds().getSouthWest());
-                                console.log("Bounding Box: " + geoJsonLayer.getBounds().toBBoxString());
+                                //console.log("Bounding Box: " + geoJsonLayer.getBounds().toBBoxString());
                                 
                                 //Enable The Filter Button On Map
                                 var filterButton=document.getElementById("filterByGeometry");
@@ -289,16 +300,19 @@
                                 input.setAttribute("type", "hidden");
                                 input.setAttribute("name", "geometry");
                                 input.setAttribute("value", JSON.stringify(geojson.geometry));
-                                
+                                console.log(JSON.stringify(geojson.geometry));
                                 var input1 = document.createElement("input");
                                 input1.setAttribute("id","latlngs");
                                 input1.setAttribute("type", "hidden");
                                 input1.setAttribute("name", "latlngs");
                                 input1.setAttribute("value", JSON.stringify(layer._latlngs));
-                                //Append it to myform
-                                document.getElementById("myform").appendChild(input);
                                 
-                                document.getElementById("myform").appendChild(input1);
+                                 map.fitBounds(layer._latlngs);
+                                 //console.log(JSON.stringify(layer._latlngs));
+                                 //Append it to myform
+                                 document.getElementById("myform").appendChild(input);
+                                
+                                 document.getElementById("myform").appendChild(input1);
                             }
                             else if (type === 'circle') {
 
@@ -329,59 +343,20 @@
                     }).addTo(map);		
                     
                     var Esri_WorldImagery=L.tileLayer.provider('Esri.WorldImagery');
-
-                    
-                    QueryResult[2019-2019]=L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
-                            layers: '<%=lyr[5]%>',
-                            transparent:true,
-                            styles:'<%=st[5]%>',
-                            env: 'color:'+'<%=COLORS[5]%>',
-                            format:'image/png'
-                    });
-                    QueryResult[2019-2018]=L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
-                            layers: '<%=lyr[4]%>',
-                            transparent:true,
-                            styles:'<%=st[4]%>',
-                            env: 'color:'+'<%=COLORS[4]%>',
-                            format:'image/png'
-                    });
-                    QueryResult[2019-2017]=L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
-                            layers: '<%=lyr[3]%>',
-                            transparent:true,
-                            styles:'<%=st[3]%>',
-                            env: 'color:'+'<%=COLORS[3]%>',
-                            format:'image/png'
-                    });
-                    QueryResult[2019-2016]=L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
-                            layers: '<%=lyr[2]%>',
-                            transparent:true,
-                            styles:'<%=st[2]%>',
-                            env: 'color:'+'<%=COLORS[2]%>',
-                            format:'image/png'
-                    });
-                    QueryResult[2019-2015]=L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
-                            layers: '<%=lyr[1]%>',
-                            transparent:true,
-                            styles:'<%=st[1]%>',
-                            env: 'color:'+'<%=COLORS[1]%>',
-                            format:'image/png'
-                    });
-                    QueryResult[2019-2014]=L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
-                            layers: '<%=lyr[0]%>',
-                            transparent:true,
-                            styles:'<%=st[0]%>',
-                            env: 'color:'+'<%=COLORS[0]%>',
-                            format:'image/png'
-                            
-                    }).addTo(map);
                     var overlayLayers={
-                            "Query Result-2019":QueryResult[2019-2019],
-                            "Query Result-2018":QueryResult[2019-2018],
-                            "Query Result-2017":QueryResult[2019-2017],
-                            "Query Result-2016":QueryResult[2019-2016],
-                            "Query Result-2015":QueryResult[2019-2015],
-                            "Query Result-2014":QueryResult[2019-2014]
+                            
                         };
+                    <%for(int year:YEARS){%>
+                    QueryResult[<%=year%>-2014]=L.tileLayer.wms("http://72819293.ngrok.io/geoserver/wms", {
+                            layers: '<%=lyr[year-2014]%>',
+                            transparent:true,
+                            styles:'<%=st[year-2014]%>',
+                            env: 'color:'+'<%=COLORS[year-2014]%>',
+                            format:'image/png'
+                    });
+                    overlayLayers["QueryResult-"+<%=year%>]=QueryResult[<%=year%>-2014];
+                    <%}%>
+                    
                         
                     var control=L.control.layers({
                         "Basic":basicMap,"Esri.WorldImagery":Esri_WorldImagery},
@@ -470,7 +445,7 @@
 
                               });
                             }
-                        }, 300);
+                        },300);
                         //map.openPopup(popup);
 			
                     });
@@ -481,6 +456,55 @@
                     	
                      <% } %> 
                 };
+                
+                function drawPolygon() {
+                    if(layer !== null)
+                    {
+                        alert('One Polygon Already Exists On The Map. Try Again After Removing That.');
+                        return;
+                    }
+                    //var coords =  [[48,-3],[50,5],[44,11],[48,-3]] ;          
+                   var coords = document.getElementById("coordPolygon").value;
+
+                   var a = JSON.parse(coords);
+                   //console.log(a);
+                   //Converting corrdinates to LatLngs
+                   for(var i=0;i<a.length;i++)
+                   {
+                       var temp=a[i][0];
+                       a[i][0]=a[i][1];
+                       a[i][1]=temp;
+                   }
+                   //console.log(a);
+                   if(custom_polygon)
+                   {
+                       map.removeLayer(custom_polygon);
+                   }
+                   custom_polygon = L.polygon(a, {color: 'red'});
+                   custom_polygon.addTo(map);
+                   console.log(custom_polygon);
+                   custom_polygon.on('click',function(e)
+                    {
+                         map.removeLayer(custom_polygon);
+                         var filterButton=document.getElementById("filterByGeometry");
+                         filterButton.disabled=true;
+                         var form=document.getElementById("myform");
+                         var geometry=document.getElementById("geometry");
+                         form.removeChild(geometry);
+                    });
+                   var filterButton=document.getElementById("filterByGeometry");
+                   filterButton.disabled=false;
+                   var geom='{"type":"Polygon","coordinates":['+coords+']}';
+                   console.log(geom);
+                   //Create Hidden Field For Geometry Object
+                   var input = document.createElement("input");
+                   input.setAttribute("id","geometry");
+                   input.setAttribute("type", "hidden");
+                   input.setAttribute("name", "geometry");
+                   input.setAttribute("value", geom);
+                   document.getElementById("myform").appendChild(input);
+                   map.fitBounds(custom_polygon.getBounds());
+                }
         </script>
         <style>
             html, body {
@@ -494,6 +518,11 @@
                 padding:0px;
                 border:0px;
             }
+            .grid-container {
+                display: grid;
+                grid-template-columns: auto 100px;
+                grid-gap: 10px;
+              }
         </style>
     </head>
     <body >
@@ -502,18 +531,11 @@
             <div>
                 <table class="w3-table w3-border w3-responsive w3-card-4">
                     <tr>
-                        <td><input type="color" id="color_2014" value="#ff3300"></td>
-                        <td>2014</td>
-                        <td><input type="color" id="color_2015" value="#ff9900"></td>                        
-                        <td>2015</td>
-                        <td><input type="color" id="color_2016"value="#A693BD"></td>                        
-                        <td>2016</td>
-                        <td><input type="color" id="color_2017" value="#000000"></td>                        
-                        <td>2017</td>
-                        <td><input type="color" id="color_2018" value="#00cc33"></td>                       
-                        <td>2018</td>
-                        <td><input type="color" id="color_2019" value="#0099cc"></td>
-                        <td>2019</td>
+                        <% for(int year:YEARS){%>
+                            <td><input type="color" id="color_<%=year%>" value="#<%=COLORS[year-2014]%>"></td>
+                            <td><%=year%></td>
+                        <%}%>
+                        
                     </tr>
                     
                 </table>
@@ -523,9 +545,7 @@
                         <td>
                             <input type="button" class="w3-btn w3-teal" id="applyCs" onclick="applyColors()" name="applyCs" value="Apply Colors">
                         </td>
-                        <td>
-                            <input type="submit" class="w3-btn w3-teal" id="filterByGeometry" name="filterByGeometry" value="Filter" disabled="true">
-                        </td>
+                        
                     </tr>
                 </table>
                 <div>
@@ -542,29 +562,35 @@
                         </c:forEach>
                     </table>
                 </div>
-                    <br>
-                    <input type="text" style="width:30%;" placeholder="Enter CQL Filter (Map Only)" class="w3-input w3-border w3-round w3-animate-input" id="cql_filter">
-                    <br>
-                    <input type="button" class="w3-btn w3-teal" id="applyCqlFilter" name="applyFilter" onclick="applyCQLFilter()" value="Apply Filter">
 
-                
             </div>
             <div style="float:left;width:40%;height:100%;">
+                <br>
+                <input type="text" style="width:50%;" placeholder="Enter CQL Filter (Map Only)" class="w3-input w3-border w3-round w3-animate-input" id="cql_filter">
+                <br>
+                <input type="button" class="w3-btn w3-teal" id="applyCqlFilter" name="applyFilter" onclick="applyCQLFilter()" value="Apply Filter">
+                
                     <h1>Chart</h1>
                     <div id="chartContainer"style="width:100%;height: 100%;" ></div>
                 </div>
                 <div style="width:60%;height: 70%;float:right;">
-                        <input type="hidden" name="state_osm_id" value="${STATE_OSM_ID}">
-                        <input type="hidden" name="itemToCount" value="${ITEM_TO_COUNT}">
-                        <c:forEach items="${propsMapForQuery}" var="prop">
-                            <input type="hidden" name="${prop.key}" value="${prop.value[0]}">
-                        </c:forEach>
-                        
-                        <div>
-                            <h1>Map</h1>
-                            <div id="map">
-                            </div>
+                    <br>    
+                    <input type="text" style="width:50%;" placeholder="Enter Coordinates To Draw Polygon  e.g. [[48,-3],[50,5],[44,11],[48,-3]]" class="w3-input w3-border w3-round w3-animate-input"  name="coordPolygon" id="coordPolygon"/><br>
+                    <div class="grid-container">
+                        <div><input type="button" onclick="drawPolygon()" class="w3-btn w3-teal" value="Draw"/><br></div> 
+                        <div><input type="submit" class="w3-btn w3-teal" id="filterByGeometry" name="filterByGeometry" value="Filter" disabled="true"></div>
+                    </div>
+                    <input type="hidden" name="state_osm_id" value="${STATE_OSM_ID}">
+                    <input type="hidden" name="itemToCount" value="${ITEM_TO_COUNT}">
+                    <c:forEach items="${propsMapForQuery}" var="prop">
+                        <input type="hidden" name="${prop.key}" value="${prop.value[0]}">
+                    </c:forEach>
+
+                    <div>
+                        <h1>Map</h1>
+                        <div id="map">
                         </div>
+                    </div>
 
                 </div>
                 <div id="info" style="width:100%;height:auto;overflow-x: scroll;">

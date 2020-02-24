@@ -61,7 +61,8 @@ public class LoadInitDataForStateWiseAnalysis extends HttpServlet {
         String path_propsVals = context.getRealPath("/WEB-INF/props_vals.json");
         //System.out.println("PATH:"+fullPath);
         
-        
+        int []YEARS={2014,2015,2016,2017};
+        request.setAttribute("YEARS", YEARS);
         request.setAttribute("STATE_OSM_ID",STATE_OSM_ID);
         request.setAttribute("ITEM_TO_COUNT",ITEM_TO_COUNT);
         
@@ -92,7 +93,9 @@ public class LoadInitDataForStateWiseAnalysis extends HttpServlet {
             //Removing Other Parameters And Setting Request Attribute
             List<String> allProps=Properties.getProperties(Properties.MapToTable(ITEM_TO_COUNT));
             request.setAttribute("propsMapForQuery",getPropertiesFromParameters(request.getParameterMap(),allProps));
-            request.setAttribute("geometry",request.getParameter("geometry"));
+            request.setAttribute("geometry",request.getParameterMap().get("geometry"));
+            String [] geometries=request.getParameterMap().get("geometry");
+            
             toForward="FilterByGeometryOnMapServlet";
         }
         else

@@ -192,12 +192,34 @@ public class Properties {
             }
         }
     }
-    /*public static void main(String[] argv){
+    public static void main(String[] argv){
+       List<String> pro=new ArrayList<>();
        List<String> props=Properties.getProperties("planet_osm_line");
        props.forEach((p) -> {
-           System.out.println(p);
+           if(!pro.contains(p))
+           {
+               pro.add(p);
+           }
         });
-    }*/
+       List<String> props1=Properties.getProperties("planet_osm_point");
+       props1.forEach((p) -> {
+           if(!pro.contains(p))
+           {
+               pro.add(p);
+           }
+        });
+       List<String> props2=Properties.getProperties("planet_osm_polygon");
+       props2.forEach((p) -> {
+           if(!pro.contains(p))
+           {
+               pro.add(p);
+           }
+        });
+       pro.forEach((p) -> {
+           System.out.println(p);
+       });
+       System.out.println(pro.size());
+    }
     
     /*TEST METHOD
     public static void main(String []args)
