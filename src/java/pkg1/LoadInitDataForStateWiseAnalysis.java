@@ -80,12 +80,20 @@ public class LoadInitDataForStateWiseAnalysis extends HttpServlet {
         request.setAttribute("ITEM_TO_COUNT",ITEM_TO_COUNT);
         request.setAttribute("FROMYEAR",fromyear);
         request.setAttribute("TOYEAR",toyear);
-        if(request.getParameterMap().containsKey("filterByGeometry"))
-        {
-            System.out.println("Yes!");
-        }
-        //Get Properties Button Clicked
+
+        
         String toForward="StateWiseAnalysis.jsp";
+
+        if(toyear < fromyear)
+        {
+            request.setAttribute("ITEMS_TO_COUNT",ITEMS_TO_COUNT);
+            request.setAttribute("stateMap",States.getStates());
+            request.setAttribute("ERROR_MESS","'FROM YEAR' SHOULD BE LESS THAN OR EQUAL TO 'TO YEAR'");
+            RequestDispatcher rd=request.getRequestDispatcher(toForward); 
+            rd.forward(request, response);
+        }
+        
+        //Get Properties Button Clicked
         if(request.getParameter("loadProperties")!=null)
         {
             
