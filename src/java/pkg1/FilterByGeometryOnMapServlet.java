@@ -41,7 +41,7 @@ public class FilterByGeometryOnMapServlet extends HttpServlet {
         String ITEM_TO_COUNT=(String)request.getAttribute("ITEM_TO_COUNT");
         Map<String,String[]> parameters=(Map<String,String[]>)request.getAttribute("propsMapForQuery");
         String []geometry=(String [])request.getAttribute("geometry");
-        int []YEARS=(int [])request.getAttribute("YEARS");
+        Integer []YEARS=(Integer [])request.getAttribute("YEARS");
        for(String geo:geometry)
             {
                 System.out.println(geo);
@@ -58,7 +58,7 @@ public class FilterByGeometryOnMapServlet extends HttpServlet {
         //System.out.println("POOL SIZE :"+String.valueOf(Runtime.getRuntime().availableProcessors() - 1));
         
         ForkJoinPool fjp = new ForkJoinPool();
-        CalculateForkJoinTask task=new CalculateForkJoinTask(YEARS.length,new CalculateCount(ITEM_TO_COUNT,2014, STATE_OSM_ID, parameters, geometry));
+        CalculateForkJoinTask task=new CalculateForkJoinTask(YEARS[0],YEARS.length,new CalculateCount(ITEM_TO_COUNT,2014, STATE_OSM_ID, parameters, geometry));
         fjp.invoke(task);
         for(int i=0;i<YEARS.length;i++)
         {

@@ -13,7 +13,8 @@
 <%@page import="pkg1.Properties"%>
 <%
     //int  []YEARS={2014,2015,2016,2017,2018,2019}; 
-    int []YEARS=(int [])request.getAttribute("YEARS");
+    Integer []YEARS=(Integer [])request.getAttribute("YEARS");
+    int fromyear=Integer.parseInt(request.getAttribute("FROMYEAR").toString());
     String dataPoints = null;
     boolean displayChart=false;
     if(request.getAttribute("STATE_OSM_ID")!="")
@@ -28,6 +29,7 @@
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>JSP Page</title>
         <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 
@@ -67,17 +69,17 @@
             ajax.send();
             function applyColors()
             {
-                //QueryResult[0]   -- > For 2014 
-                //dps[0] --> For 2014
+                //QueryResult[0]   -- > For 2014 OR FROMYEAR
+                //dps[0] --> For FROMYEAR
                 for(var i=0;i<QueryResult.length;i++)
                 {
-                    var c=document.getElementById('color_'+(2014+i)).value;
+                    var c=document.getElementById('color_'+(<%=fromyear%>+i)).value;
                     QueryResult[i].setParams({env: 'color:'+c.substr(1,c.length)});
                     
                 }
                 for(var i=0;i<QueryResult.length;i++)
                 {
-                    var c=document.getElementById('color_'+(2014+i)).value ;                
+                    var c=document.getElementById('color_'+(<%=fromyear%>+i)).value ;                
                     dps[i].color=c;
                 }
                 console.log(dps);
@@ -96,6 +98,7 @@
                         String []st=new String[YEARS.length];
                         String []lyr=new String[YEARS.length];
                         String []COLORS={"ff3300","ff9900","A693BD","000000","00cc33","0099cc"};
+                            
                         if (request.getAttribute("ITEM_TO_COUNT").toString().equals("POINTS")){
                           String prefix="bisag:style_point";
                           String prefix_lyr="bisag:view";
@@ -103,8 +106,8 @@
                           int i;
                           for(int year:YEARS)
                           {
-                              st[year-2014]=prefix;
-                              lyr[year-2014]=prefix_lyr+String.valueOf(year)+suffix_lyr;
+                              st[year-fromyear]=prefix;
+                              lyr[year-fromyear]=prefix_lyr+String.valueOf(year)+suffix_lyr;
                           }
                         }
                         else if (request.getAttribute("ITEM_TO_COUNT").toString().equals("LINES"))
@@ -120,8 +123,8 @@
                             }
                           for(int year:YEARS)
                             {
-                                st[year-2014]=prefix;
-                                lyr[year-2014]=prefix_lyr+String.valueOf(year)+suffix_lyr;
+                                st[year-fromyear]=prefix;
+                                lyr[year-fromyear]=prefix_lyr+String.valueOf(year)+suffix_lyr;
                             }
                         }
                         else if (request.getAttribute("ITEM_TO_COUNT").toString().equals("POLYGONS"))
@@ -130,10 +133,10 @@
                             String prefix_lyr="view";
                             String suffix_lyr="_polygons";
                             int i;
-                          for(int year:YEARS)
+                            for(int year:YEARS)
                             {
-                                st[year-2014]=prefix;
-                                lyr[year-2014]=prefix_lyr+String.valueOf(year)+suffix_lyr;
+                                st[year-fromyear]=prefix;
+                                lyr[year-fromyear]=prefix_lyr+String.valueOf(year)+suffix_lyr;
                             }
                         }
                 %>
@@ -347,14 +350,15 @@
                             
                         };
                     <%for(int year:YEARS){%>
-                    QueryResult[<%=year%>-2014]=L.tileLayer.wms("http://72819293.ngrok.io/geoserver/wms", {
-                            layers: '<%=lyr[year-2014]%>',
+                    QueryResult[<%=year%>-<%=fromyear%>]=L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
+                            layers: '<%=lyr[year-fromyear]%>',
                             transparent:true,
-                            styles:'<%=st[year-2014]%>',
-                            env: 'color:'+'<%=COLORS[year-2014]%>',
-                            format:'image/png'
+                            styles:'<%=st[year-fromyear]%>',
+                            env: 'color:'+'<%=COLORS[year-fromyear]%>',
+                            format:'image/png',
+                            tiled:true
                     });
-                    overlayLayers["QueryResult-"+<%=year%>]=QueryResult[<%=year%>-2014];
+                    overlayLayers["QueryResult-"+<%=year%>]=QueryResult[<%=year%>-<%=fromyear%>];
                     <%}%>
                     
                         
@@ -401,7 +405,7 @@
                             //console.log(WIDTH);
                             //console.log(HEIGHT);
                             //console.log(BBOX);
-                            var LAYERS='bisag:myview_2014,bisag:myview_2015,bisag:myview_2016,bisag:myview_2017,bisag:myview_2018,bisag:myview_2019';
+                            //var LAYERS='bisag:myview_2014,bisag:myview_2015,bisag:myview_2016,bisag:myview_2017,bisag:myview_2018,bisag:myview_2019';
                             var URL='http://localhost:8080/geoserver/bisag/wms?'+
                                     'SERVICE=WMS&'+
                                     'VERSION=1.1.1&'+
@@ -505,6 +509,7 @@
                    document.getElementById("myform").appendChild(input);
                    map.fitBounds(custom_polygon.getBounds());
                 }
+                
         </script>
         <style>
             html, body {
@@ -527,12 +532,12 @@
     </head>
     <body >
         <div style="padding: 20px;border:2px solid;">
-            <form action="LoadInitDataForStateWiseAnalysis" method="get" id="myform">
+            <form action="LoadInitDataForStateWiseAnalysis"  method="get" id="myform">
             <div>
                 <table class="w3-table w3-border w3-responsive w3-card-4">
                     <tr>
                         <% for(int year:YEARS){%>
-                            <td><input type="color" id="color_<%=year%>" value="#<%=COLORS[year-2014]%>"></td>
+                            <td><input type="color" id="color_<%=year%>" value="#<%=COLORS[year-fromyear]%>"></td>
                             <td><%=year%></td>
                         <%}%>
                         
@@ -564,7 +569,7 @@
                 </div>
 
             </div>
-            <div style="float:left;width:40%;height:100%;">
+                <div style="float:left;width:40%;height:100%;" >
                 <br>
                 <input type="text" style="width:50%;" placeholder="Enter CQL Filter (Map Only)" class="w3-input w3-border w3-round w3-animate-input" id="cql_filter">
                 <br>
@@ -580,8 +585,13 @@
                         <div><input type="button" onclick="drawPolygon()" class="w3-btn w3-teal" value="Draw"/><br></div> 
                         <div><input type="submit" class="w3-btn w3-teal" id="filterByGeometry" name="filterByGeometry" value="Filter" disabled="true"></div>
                     </div>
+                    
+                    <!--HIDDEN DATA-->
                     <input type="hidden" name="state_osm_id" value="${STATE_OSM_ID}">
                     <input type="hidden" name="itemToCount" value="${ITEM_TO_COUNT}">
+                    <input type="hidden" name="fromyear" value="${FROMYEAR}">
+                    <input type="hidden" name="toyear" value="${TOYEAR}">
+                    <!-- HIDDEN DATA ENDS-->
                     <c:forEach items="${propsMapForQuery}" var="prop">
                         <input type="hidden" name="${prop.key}" value="${prop.value[0]}">
                     </c:forEach>

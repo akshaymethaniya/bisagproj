@@ -6,8 +6,6 @@
 package pkg1;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,7 +37,7 @@ public class StateWiseAnalysisServlet extends HttpServlet {
         String STATE_OSM_ID=(String)request.getAttribute("STATE_OSM_ID");
         String ITEM_TO_COUNT=(String)request.getAttribute("ITEM_TO_COUNT");
         Map<String,String[]> parameters=(Map<String,String[]>)request.getAttribute("propsMapForQuery");
-        int []YEARS=(int [])request.getAttribute("YEARS");
+        Integer []YEARS=(Integer [])request.getAttribute("YEARS");
         
         List<Map<Object,Object>> list = new ArrayList<>();
         
@@ -49,7 +47,7 @@ public class StateWiseAnalysisServlet extends HttpServlet {
 
         System.out.println("POOL SIZE :"+String.valueOf(Runtime.getRuntime().availableProcessors() - 1));
         ForkJoinPool fjp = new ForkJoinPool();
-        CalculateForkJoinTask task=new CalculateForkJoinTask(YEARS.length,new CalculateCount(ITEM_TO_COUNT,2014, STATE_OSM_ID, parameters));
+        CalculateForkJoinTask task=new CalculateForkJoinTask(YEARS[0],YEARS.length,new CalculateCount(ITEM_TO_COUNT,2014, STATE_OSM_ID, parameters));
         fjp.invoke(task);
         for(int i=0;i<YEARS.length;i++)
         {
