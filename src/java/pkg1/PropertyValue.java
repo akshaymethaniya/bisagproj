@@ -10,8 +10,11 @@ package pkg1;
  * @author FOR ORACLE
  */
 public class PropertyValue {
+
+    private final String propertyName;
     
-    private String propertyName,propertyValue,Description;
+    private final String propertyValue;
+    private final String Description;
 
     public PropertyValue(String propertyName, String propertyValue, String Description) {
         this.propertyName = propertyName;

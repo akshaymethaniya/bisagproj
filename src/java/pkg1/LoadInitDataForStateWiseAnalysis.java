@@ -5,14 +5,11 @@
  */
 package pkg1;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -42,6 +39,17 @@ public class LoadInitDataForStateWiseAnalysis extends HttpServlet {
         
         String STATE_OSM_ID="";
         String ITEM_TO_COUNT="";
+        int fromyear=2014;
+        int toyear=2019;
+
+        if(request.getParameterMap().containsKey("fromyear"))
+        {
+            fromyear=Integer.parseInt(request.getParameter("fromyear"));
+        }
+        if(request.getParameterMap().containsKey("toyear"))
+        {
+            toyear=Integer.parseInt(request.getParameter("toyear"));
+        }
         
         if(request.getParameterMap().containsKey("state_osm_id"))
         {
@@ -61,11 +69,17 @@ public class LoadInitDataForStateWiseAnalysis extends HttpServlet {
         String path_propsVals = context.getRealPath("/WEB-INF/props_vals.json");
         //System.out.println("PATH:"+fullPath);
         
-        int []YEARS={2014,2015,2016,2017};
+        System.out.println("TOYEAR : "+toyear);
+        Integer []YEARS=new Integer[toyear-fromyear+1];
+        for(int i=0;i<toyear-fromyear+1;i++)
+        {
+            YEARS[i]=fromyear+i;
+        }
         request.setAttribute("YEARS", YEARS);
         request.setAttribute("STATE_OSM_ID",STATE_OSM_ID);
         request.setAttribute("ITEM_TO_COUNT",ITEM_TO_COUNT);
-        
+        request.setAttribute("FROMYEAR",fromyear);
+        request.setAttribute("TOYEAR",toyear);
         if(request.getParameterMap().containsKey("filterByGeometry"))
         {
             System.out.println("Yes!");
@@ -94,7 +108,6 @@ public class LoadInitDataForStateWiseAnalysis extends HttpServlet {
             List<String> allProps=Properties.getProperties(Properties.MapToTable(ITEM_TO_COUNT));
             request.setAttribute("propsMapForQuery",getPropertiesFromParameters(request.getParameterMap(),allProps));
             request.setAttribute("geometry",request.getParameterMap().get("geometry"));
-            String [] geometries=request.getParameterMap().get("geometry");
             
             toForward="FilterByGeometryOnMapServlet";
         }

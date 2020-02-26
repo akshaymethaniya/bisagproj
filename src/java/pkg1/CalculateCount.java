@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 import static pkg1.PostgreSqlConnectionData.HOST;
 import static pkg1.PostgreSqlConnectionData.PASSWORD;
 import static pkg1.PostgreSqlConnectionData.USERNAME;
+import static pkg1.PostgreSqlConnectionData.getHost;
 
 /**
  *
@@ -213,7 +214,7 @@ public class CalculateCount  {
             
             Class.forName("org.postgresql.Driver");
             con = DriverManager
-               .getConnection("jdbc:postgresql://"+HOST+"/"+DBNAME,USERNAME,PASSWORD);
+               .getConnection("jdbc:postgresql://"+getHost(year)+"/"+DBNAME,USERNAME,PASSWORD);
             
             Statement st=con.createStatement();
             

@@ -16,10 +16,12 @@ public class CalculateForkJoinTask extends RecursiveTask<Integer>{
     private final int totalYears;
     public int []COUNTS;
     private final CalculateCount cc;
-    public CalculateForkJoinTask(int totalYears,CalculateCount cc) {
+    private final int fromyear;
+    public CalculateForkJoinTask(int fromyear,int totalYears,CalculateCount cc) {
         this.totalYears=totalYears;
         this.cc=cc;
         this.COUNTS=new int[totalYears];
+        this.fromyear=fromyear;
     }
     @Override
     protected Integer compute() {
@@ -31,16 +33,16 @@ public class CalculateForkJoinTask extends RecursiveTask<Integer>{
             {
                 
                 if(cc.geometry!=null)
-                    subtasks[i]= new CalculateForkJoinTask(0,new CalculateCount(cc.itemToCount,2014+i,cc.STATE_OSM_ID,cc.parameters,cc.geometry));                
+                    subtasks[i]= new CalculateForkJoinTask(this.fromyear,0,new CalculateCount(cc.itemToCount,fromyear+i,cc.STATE_OSM_ID,cc.parameters,cc.geometry));                
                 else
-                    subtasks[i]= new CalculateForkJoinTask(0,new CalculateCount(cc.itemToCount,2014+i,cc.STATE_OSM_ID,cc.parameters));                
+                    subtasks[i]= new CalculateForkJoinTask(this.fromyear,0,new CalculateCount(cc.itemToCount,fromyear+i,cc.STATE_OSM_ID,cc.parameters));                
             }
             for(int i=0;i<this.totalYears;i++)
             {
                 subtasks[i].fork();
             }
             for(int i=0;i<this.totalYears;i++){
-                COUNTS[subtasks[i].cc.year-2014]=subtasks[i].join();
+                COUNTS[subtasks[i].cc.year-this.fromyear]=subtasks[i].join();
             }
             return 0;
         }

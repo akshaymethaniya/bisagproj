@@ -5,10 +5,6 @@
  */
 package pkg1;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -19,7 +15,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
+import static pkg1.PostgreSqlConnectionData.HOST;
 
 /**
  *
@@ -108,8 +104,8 @@ public class Properties {
         try {
             
             Class.forName("org.postgresql.Driver");
-            con = DriverManager
-               .getConnection("jdbc:postgresql://localhost:5432/postgres",USERNAME,PASSWORD);
+                        con = DriverManager.getConnection("jdbc:postgresql://"+HOST+"/osmdata-2014",USERNAME,PASSWORD);
+
             
             st=con.createStatement();
             String sql="SELECT * FROM properties";
@@ -155,8 +151,8 @@ public class Properties {
         try {
             
             Class.forName("org.postgresql.Driver");
-            con = DriverManager
-               .getConnection("jdbc:postgresql://localhost:5432/osmdata-2019",USERNAME,PASSWORD);
+            con = DriverManager.getConnection("jdbc:postgresql://"+HOST+"/osmdata-2014",USERNAME,PASSWORD);
+
             
             st=con.createStatement();
             String sql="SELECT column_name\n" +

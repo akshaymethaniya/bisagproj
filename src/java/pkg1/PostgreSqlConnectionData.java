@@ -12,5 +12,15 @@ package pkg1;
 public class PostgreSqlConnectionData {
     public static final String USERNAME="postgres";
     public static final String PASSWORD="postgres";
-    public static final String HOST="34.80.94.206:5432";
+    public static final String PORT="5432";
+    public static final String HOST="34.80.94.206"+":"+PORT;
+    
+    public static String getHost(int year)
+    {
+        if(year == 2018)
+        {
+            return "35.228.180.77"+":"+PORT;
+        }
+        return "34.80.94.206"+":"+PORT;
+    }
 }
