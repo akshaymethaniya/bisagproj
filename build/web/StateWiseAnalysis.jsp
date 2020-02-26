@@ -280,14 +280,22 @@
             function validate(){
                     var fromyear=document.getElementById("fromyear").value;
                     var toyear=document.getElementById("toyear").value;
+                    var error_mess=document.getElementById("error_mess");
+
                     console.log('called');
                     console.log('fromyear'+fromyear);
                     
                     if(Number(toyear) < Number(fromyear))
                     {
-                        alert('To Year Should Be Greater Than From Year');
+                        //alert('To Year Should Be Greater Than From Year');
+                        error_mess.innerHTML="<i class='fa fa-warning' style='font-size:15px;color:red'></i>&nbsp;'FROM YEAR' SHOULD BE LESS THAN OR EQUAL TO 'TO YEAR'";
+                    }
+                    else
+                    {
+                        error_mess.innerHTML="";
                     }
             }
+            
             window.onload = function() {
                 var x=document.getElementById("properties_dropdownlist").options;
                 for(var i=0;i<x.length;i++){
@@ -358,6 +366,7 @@
                     </td>
                 </tr>
                 
+                
             <c:choose>
                 <c:when test="${not empty propertiesList}">
                     <tr>
@@ -383,11 +392,11 @@
                         <td>
                             <input type="submit" class="w3-btn w3-teal" style="width: 100%;" name="loadProperties" value="Load Properties">
                         </td>
-                    </tr>
-                   
+                    </tr>                 
                 </c:otherwise>
             </c:choose>
             </table>
+            <p class="w3-text-red" id="error_mess"><i class="fa fa-warning" style="font-size:15px;color:red"></i>&nbsp;${ERROR_MESS}</p>
         </form>
     </body>
 </html>
