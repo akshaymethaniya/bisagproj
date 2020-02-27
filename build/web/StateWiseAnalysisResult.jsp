@@ -15,6 +15,7 @@
     //int  []YEARS={2014,2015,2016,2017,2018,2019}; 
     Integer []YEARS=(Integer [])request.getAttribute("YEARS");
     int fromyear=Integer.parseInt(request.getAttribute("FROMYEAR").toString());
+    String [] geometries=(String []) request.getAttribute("geometry");
     String dataPoints = null;
     boolean displayChart=false;
     if(request.getAttribute("STATE_OSM_ID")!="")
@@ -172,7 +173,6 @@
                     }).setView([22.74312,72],7);
                     
                     
-                    
                     var marker=null;
                     var osmGeocoder = new L.Control.OSMGeocoder({
                         collapsed: false,
@@ -258,7 +258,26 @@
                         }
                     });
                     //console.log(drawnItems.getBounds());
+                    
+                   
+                        
+                    //L.polygon(coords, {color: 'red'});
+                    <c:forEach items="${geometry}" var="geo">
+                        var geometry_filtered=JSON.parse('${geo}');
+                        console.log(geometry_filtered.coordinates[0]);
+                        var a=geometry_filtered.coordinates[0];
+                        for(var i=0;i<a.length;i++)
+                        {
+                            var temp=a[i][0];
+                            a[i][0]=a[i][1];
+                            a[i][1]=temp;
+                        }
+                        var poly=L.polygon(a, {color: 'red'});
+                        poly.addTo(map);
+                        //map.fitBounds(poly.getBounds());
+                    </c:forEach>
                     map.addControl(drawControl);
+                    
                     map.on('draw:deleted',function(e){
                         layer=null;
                         var filterButton=document.getElementById("filterByGeometry");
@@ -278,6 +297,9 @@
                         } */   
                         var type = e.layerType;
                             layer = e.layer;
+                            var content="";
+                            layer.bindPopup(content);
+
                             //console.log(layer);
                             //console.log(layer.toGeoJSON());
                             if(type === 'polygon' || type === 'rectangle')
@@ -361,9 +383,14 @@
                     overlayLayers["QueryResult-"+<%=year%>]=QueryResult[<%=year%>-<%=fromyear%>];
                     <%}%>
                     
-                        
+                    var google=L.tileLayer('http://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}', {
+                        attribution: 'google'
+                    });
                     var control=L.control.layers({
-                        "Basic":basicMap,"Esri.WorldImagery":Esri_WorldImagery},
+                        "Basic":basicMap,
+                        "Esri.WorldImagery":Esri_WorldImagery,
+                        "google":google
+                        },
                             overlayLayers
                         ).addTo(map);
                     L.control.scale().addTo(map);
@@ -530,7 +557,7 @@
               }
         </style>
     </head>
-    <body >
+    <body>
         <div style="padding: 20px;border:2px solid;">
             <form action="LoadInitDataForStateWiseAnalysis"  method="get" id="myform">
             <div>
@@ -548,7 +575,7 @@
                 <table>
                     <tr>
                         <td>
-                            <input type="button" class="w3-btn w3-teal" id="applyCs" onclick="applyColors()" name="applyCs" value="Apply Colors">
+                            <input type="button" class="w3-btn" style='background-color: #668DAC;color:white;' id="applyCs" onclick="applyColors()" name="applyCs" value="Apply Colors">
                         </td>
                         
                     </tr>
@@ -573,7 +600,7 @@
                 <br>
                 <input type="text" style="width:50%;" placeholder="Enter CQL Filter (Map Only)" class="w3-input w3-border w3-round w3-animate-input" id="cql_filter">
                 <br>
-                <input type="button" class="w3-btn w3-teal" id="applyCqlFilter" name="applyFilter" onclick="applyCQLFilter()" value="Apply Filter">
+                <input type="button" class="w3-btn" style="background-color: #668DAC;color:white;" id="applyCqlFilter" name="applyFilter" onclick="applyCQLFilter()" value="Apply Filter">
                 
                     <h1>Chart</h1>
                     <div id="chartContainer"style="width:100%;height: 100%;" ></div>
@@ -582,8 +609,8 @@
                     <br>    
                     <input type="text" style="width:50%;" placeholder="Enter Coordinates To Draw Polygon  e.g. [[48,-3],[50,5],[44,11],[48,-3]]" class="w3-input w3-border w3-round w3-animate-input"  name="coordPolygon" id="coordPolygon"/><br>
                     <div class="grid-container">
-                        <div><input type="button" onclick="drawPolygon()" class="w3-btn w3-teal" value="Draw"/><br></div> 
-                        <div><input type="submit" class="w3-btn w3-teal" id="filterByGeometry" name="filterByGeometry" value="Filter" disabled="true"></div>
+                        <div><input type="button" onclick="drawPolygon()" class="w3-btn" style="background-color: #668DAC;color:white;" value="Draw"/><br></div> 
+                        <div><input type="submit" class="w3-btn" style="background-color: #668DAC;color:white;" id="filterByGeometry" name="filterByGeometry" value="Filter" disabled="true"></div>
                     </div>
                     
                     <!--HIDDEN DATA-->
