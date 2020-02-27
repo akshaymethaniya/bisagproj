@@ -16,6 +16,13 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
         <title>State Wise Analysis Form</title>
         <style>
+            body{
+                background-image: url('./background.png');
+                background-repeat: no-repeat;
+                background-size:cover;
+                    
+
+            }
             .tooltip {
             position: relative;
             border-bottom: 1px dotted black;
@@ -24,7 +31,7 @@
           .tooltip .tooltiptext {
             visibility: hidden;
             width: 300px;
-            background-color: #009688;
+            background-color: #668DAC;
             color: white;
             text-align: center;
             border-radius: 6px;
@@ -52,7 +59,7 @@
                     color:grey;
             }
             i{
-                color:#009688;
+                color:#668DAC;
             }
             select{
                 display: block;
@@ -308,13 +315,14 @@
         </script>
     </head>
     <body style="margin-left:32%;width:500px;margin-top: 10%;">
-        <div class="w3-container w3-teal w3-card-4" style="text-align: center;">
+        <div class="w3-container ">
+        <div class="w3-card-4" style="text-align: center;background-color: #668DAC;color:white;">
             <h2>State Wise Analysis</h2>
         </div>
         <c:set var="b1" value="${STATE_OSM_ID}"></c:set>
         <c:set var="i1" value="${ITEM_TO_COUNT}"></c:set>
         <form action="LoadInitDataForStateWiseAnalysis" style="padding:10px;" method="get" class="w3-container w3-card-4 w3-light-grey">
-            <table id="mytable">
+            <table id="mytable" >
                 <tr>
                     <td> 
                         <div class="w3-center w3-text-blue"><h3>FROM YEAR</h3></div>
@@ -323,13 +331,27 @@
                         <div class="w3-center w3-text-blue"><h3>TO YEAR</h3></div>
                     </td>
                 </tr>
-                <tr>
-                    <td>
-                        <input type="number" id="fromyear" class="w3-input w3-border w3-light-grey" onchange="validate()" min="2014" max="2019" value="${FROMYEAR}" name="fromyear">
-                    </td>
-                    <td>
-                        <input type="number" id="toyear" class="w3-input w3-border w3-light-grey" onchange="validate()" min="2014" max="2019" value="${TOYEAR}" name="toyear">
-                    </td>
+                <tr>            
+                    <c:choose>
+                        <c:when test="${not empty propertiesList}">
+                            <td>
+                                <input type="number" id="fromyear" class="w3-input w3-border w3-light-grey"  min="2014" max="2019" value="${FROMYEAR}" name="fromyear" disabled="disabled">
+                            </td>
+                            <td>
+                                <input type="number" id="toyear" class="w3-input w3-border w3-light-grey"  min="2014" max="2019" value="${TOYEAR}" name="toyear" disabled="disabled">
+                            </td>
+                            <input type="hidden" name="fromyear" value="${FROMYEAR}">
+                            <input type="hidden" name="toyear" value="${TOYEAR}">
+                        </c:when>
+                        <c:otherwise>
+                            <td>
+                                <input type="number" id="fromyear" class="w3-input w3-border w3-light-grey" onchange="validate()" min="2014" max="2019" value="${FROMYEAR}" name="fromyear">
+                            </td>
+                            <td>
+                                <input type="number" id="toyear" class="w3-input w3-border w3-light-grey" onchange="validate()" min="2014" max="2019" value="${TOYEAR}" name="toyear">
+                            </td>
+                        </c:otherwise>
+                    </c:choose>
                 </tr>
                 <tr>
                     <td >
@@ -378,11 +400,11 @@
                                 </c:forEach>
                             </select>
                         </td>
-                        <td><button name="addProp" class="w3-btn w3-teal" style="width: 100%;" type="button"  onclick="addProperty()">ADD</button></td></td>
+                        <td><button name="addProp" class="w3-btn" style="width: 100%;background-color: #668DAC;color:white;" type="button"  onclick="addProperty()">ADD</button></td></td>
                     </tr>
                     <tr>
                         <td>
-                            <input type="submit" class="w3-btn w3-teal" style="width: 100%;" name="filter" value="View Result">
+                            <input type="submit" class="w3-btn " style="width: 100%;background-color: #668DAC;color:white;" name="filter" value="View Result">
                         </td>
                     </tr>
                     
@@ -390,14 +412,19 @@
                 <c:otherwise>
                     <tr>
                         <td>
-                            <input type="submit" class="w3-btn w3-teal" style="width: 100%;" name="loadProperties" value="Load Properties">
+                            <input type="submit" class="w3-btn" style="width: 100%;background-color: #668DAC;color:white;" name="loadProperties" value="Load Properties">
                         </td>
                     </tr>                 
                 </c:otherwise>
             </c:choose>
             </table>
-            <p class="w3-text-red" id="error_mess"><i class="fa fa-warning" style="font-size:15px;color:red"></i>&nbsp;${ERROR_MESS}</p>
+            <p class="w3-text-red" id="error_mess">
+                <c:if test="${ not empty ERROR_MESS}">
+                    <i class="fa fa-warning" style="font-size:15px;color:red"></i>&nbsp;${ERROR_MESS}
+                </c:if>
+            </p>
         </form>
+        </div>
     </body>
 </html>
 

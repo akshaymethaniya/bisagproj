@@ -70,12 +70,7 @@ public class LoadInitDataForStateWiseAnalysis extends HttpServlet {
         //System.out.println("PATH:"+fullPath);
         
         System.out.println("TOYEAR : "+toyear);
-        Integer []YEARS=new Integer[toyear-fromyear+1];
-        for(int i=0;i<toyear-fromyear+1;i++)
-        {
-            YEARS[i]=fromyear+i;
-        }
-        request.setAttribute("YEARS", YEARS);
+        
         request.setAttribute("STATE_OSM_ID",STATE_OSM_ID);
         request.setAttribute("ITEM_TO_COUNT",ITEM_TO_COUNT);
         request.setAttribute("FROMYEAR",fromyear);
@@ -89,10 +84,16 @@ public class LoadInitDataForStateWiseAnalysis extends HttpServlet {
             request.setAttribute("ITEMS_TO_COUNT",ITEMS_TO_COUNT);
             request.setAttribute("stateMap",States.getStates());
             request.setAttribute("ERROR_MESS","'FROM YEAR' SHOULD BE LESS THAN OR EQUAL TO 'TO YEAR'");
+            
             RequestDispatcher rd=request.getRequestDispatcher(toForward); 
             rd.forward(request, response);
         }
-        
+        Integer []YEARS=new Integer[toyear-fromyear+1];
+        for(int i=0;i<toyear-fromyear+1;i++)
+        {
+            YEARS[i]=fromyear+i;
+        }
+        request.setAttribute("YEARS", YEARS);
         //Get Properties Button Clicked
         if(request.getParameter("loadProperties")!=null)
         {
