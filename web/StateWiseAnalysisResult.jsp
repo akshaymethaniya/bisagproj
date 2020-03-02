@@ -46,6 +46,7 @@
 	
         <link rel="stylesheet" href="https://rawgit.com/k4r573n/leaflet-control-osm-geocoder/master/Control.OSMGeocoder.css" />
         <script src="./leaflet-provider.js"></script>
+        <script src="https://npmcdn.com/leaflet-geometryutil"></script>
         <script type="text/javascript">
             var map;
             var chart ;
@@ -53,21 +54,7 @@
             var QueryResult=[];
            var custom_polygon;
             var layer=null;
-            var ajax = new XMLHttpRequest();
-            ajax.open("GET", "http://localhost:8080/geoserver/bisag/view2019_lines/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities", true);
-            ajax.onreadystatechange = function () {
-              if (ajax.readyState === 4 && ajax.status === 200)
-              {
-                var parser = new DOMParser();
-                var xmlDoc = parser.parseFromString(ajax.responseText,"text/xml");
-                var ats=xmlDoc.getElementsByTagName("LatLonBoundingBox")[0].attributes;
-                var x=(parseFloat(ats.minx.value)+parseFloat(ats.maxx.value))/2;
-                var y=(parseFloat(ats.miny.value)+parseFloat(ats.maxy.value))/2;
-                console.log(y);
-                console.log(x);
-              }
-            };
-            ajax.send();
+            
             function applyColors()
             {
                 //QueryResult[0]   -- > For 2014 OR FROMYEAR
@@ -217,7 +204,7 @@
                     var drawnItems = new L.FeatureGroup();
                     map.addLayer(drawnItems);
                     
-
+                    /* Draw Control START */
                     var drawControl = new L.Control.Draw({
                     draw: {
 				polygon: {
@@ -257,10 +244,12 @@
                             featureGroup: drawnItems
                         }
                     });
+                    /* Draw Control END */
+
                     //console.log(drawnItems.getBounds());
                     
-                   
-                        
+                   //Polygons On Which We Have Just Applied FilterByGeometry
+                    var polygons_filtered=L.featureGroup();
                     //L.polygon(coords, {color: 'red'});
                     <c:forEach items="${geometry}" var="geo">
                         var geometry_filtered=JSON.parse('${geo}');
@@ -273,21 +262,45 @@
                             a[i][1]=temp;
                         }
                         var poly=L.polygon(a, {color: 'red'});
-                        poly.addTo(map);
+                        poly.bindPopup('You Have Just Applied Filter Here.');
+                        poly.addTo(polygons_filtered);
+                        
                         //map.fitBounds(poly.getBounds());
                     </c:forEach>
+                    polygons_filtered.addTo(map);
+                    console.log(Object.entries(polygons_filtered._layers).length);
+                    if(Object.entries(polygons_filtered._layers).length !== 0)
+                    {
+                        map.fitBounds(polygons_filtered.getBounds());
+                    }
                     map.addControl(drawControl);
-                    
+                    var polygons_created=L.featureGroup();
+                    var ind=0;
                     map.on('draw:deleted',function(e){
-                        layer=null;
-                        var filterButton=document.getElementById("filterByGeometry");
-                        filterButton.disabled=true;
+                        var layers = e.layers;
+                        var layer_name="";
+                        
+                        layers.eachLayer(function(layer) {
+                               /*How to get layer type here? */
+                               //console.log(layer.name);
+                               layer_name=layer.name;
+                               polygons_created.removeLayer(layer);
+                        });
+                        if(Object.entries(polygons_created._layers).length !== 0)
+                            map.fitBounds(polygons_created.getBounds());
+                        //layer=null;
+                        if(Object.entries(polygons_created._layers).length === 0){
+                            //Disable Filter Button
+                            var filterButton=document.getElementById("filterByGeometry");
+                            filterButton.disabled=true;
+                        }
+                        //Delete Hidden Parameters
                         var form=document.getElementById("myform");
-                        var latlngs=document.getElementById("latlngs");
-                        var geometry=document.getElementById("geometry");
+                        var latlngs=document.getElementById("latlngs-"+layer_name);
+                        var geometry=document.getElementById("geometry-"+layer_name);
                         form.removeChild(latlngs);
                         form.removeChild(geometry);
-
+                       
                     });
                     map.on('draw:created', function (e) {
                         /*if(layer !== null)
@@ -297,10 +310,8 @@
                         } */   
                         var type = e.layerType;
                             layer = e.layer;
-                            var content="";
-                            layer.bindPopup(content);
-
-                            //console.log(layer);
+                            //console.log(layer.getBounds());
+                            
                             //console.log(layer.toGeoJSON());
                             if(type === 'polygon' || type === 'rectangle')
                             {
@@ -315,29 +326,88 @@
                                 //console.log("SOUTH WEST : "+geoJsonLayer.getBounds().getSouthWest());
                                 //console.log("Bounding Box: " + geoJsonLayer.getBounds().toBBoxString());
                                 
+                                //Setting Popup Content
+                                var latlngs = layer._defaultShape ? layer._defaultShape() : layer.getLatLngs(),
+                                area = L.GeometryUtil.geodesicArea(latlngs);
+                                var a=L.GeometryUtil.readableArea(area, true);
+                                //console.log("Area : "+a.substr(0,a.length-2));
+                                var area=a.substr(0,a.length-3);
+                                var geom=JSON.stringify(geojson.geometry, null, 4);
+                                var content=
+                                `<h3>Place Details</h3><table>
+                                <tr>
+                                  <td>Name</td>
+                                  <td>  <input type="text" id="name" name="name" placeholder="Name of the place">
+                              </td>
+                                </tr>
+                                <tr>
+                                  <td>Population</td>
+                                  <td><input type="number" id="population" min="0" name="population" value="0"></td>
+                                </tr>
+                                <tr>
+                                  <td>Famous place</td>
+                                  <td><input type="text" id="famous_place" name="famousplace" placeholder="list of famous place"></td>
+                                </tr>
+                                <tr>
+                                  <td>Area(ha)</td>
+                                  <td><input type="number" id="area" name="area" step="any" value='`+area+"'"+
+                                ` ></td>
+                                </tr>
+                                
+                              </table>`+
+                                `
+                                    <h3>Polygon Details</h3>
+                                    <table>
+                                        <tr>
+                                            <td>Geometry</td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <textarea rows="5" cols="36" name="polygon_geo" disabled>`+geom+`</textarea>
+                                                <input type="hidden" name="polygon_geo" value='`+JSON.stringify(geojson.geometry)+`'
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <p>Created : `+new Date().toLocaleString()+`</p>
+                                                <input type="hidden" name="created" value='`+new Date().toLocaleString()+`' >
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="submit" name="save_poly" value="SAVE"></td>
+                                        </tr>
+                                    </table>
+                                    `;
+                                layer.bindPopup(content);
+                                
+                                
                                 //Enable The Filter Button On Map
                                 var filterButton=document.getElementById("filterByGeometry");
                                 filterButton.disabled=false;
-                                
+                                layer.name="layer"+(++ind);
+                                console.log(layer);
                                 //Create Hidden Field For Geometry Object
                                 var input = document.createElement("input");
-                                input.setAttribute("id","geometry");
+                                input.setAttribute("id","geometry-"+layer.name);
                                 input.setAttribute("type", "hidden");
                                 input.setAttribute("name", "geometry");
                                 input.setAttribute("value", JSON.stringify(geojson.geometry));
                                 console.log(JSON.stringify(geojson.geometry));
                                 var input1 = document.createElement("input");
-                                input1.setAttribute("id","latlngs");
+                                input1.setAttribute("id","latlngs-"+layer.name);
                                 input1.setAttribute("type", "hidden");
                                 input1.setAttribute("name", "latlngs");
                                 input1.setAttribute("value", JSON.stringify(layer._latlngs));
                                 
-                                 map.fitBounds(layer._latlngs);
                                  //console.log(JSON.stringify(layer._latlngs));
                                  //Append it to myform
                                  document.getElementById("myform").appendChild(input);
                                 
                                  document.getElementById("myform").appendChild(input1);
+                                 
+                                //Add Layer To polygons_created FeatureGroup
+                                layer.addTo(polygons_created);
+                                map.fitBounds(polygons_created.getBounds());
                             }
                             else if (type === 'circle') {
 
@@ -353,13 +423,7 @@
                         drawnItems.addLayer(layer);
                     });
                     
-                    /*if('${latlngs}')
-                    {
-                        var latlngs=JSON.parse('${latlngs}');
-                        console.log(latlngs);
-                        var polygon = L.polygon(latlngs, {color: 'red'}).addTo(map);
-                        map.fitBounds(polygon.getBounds());
-                    }*/
+                    
 
                     
                     var basicMap=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -382,7 +446,34 @@
                     });
                     overlayLayers["QueryResult-"+<%=year%>]=QueryResult[<%=year%>-<%=fromyear%>];
                     <%}%>
+                    QueryResult[0].addTo(map);
                     
+                    var ajax = new XMLHttpRequest();
+                    ajax.open("GET", "http://localhost:8080/geoserver/bisag/view2014_lines/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities", true);
+                    ajax.onreadystatechange = function () {
+                      if (ajax.readyState === 4 && ajax.status === 200)
+                      {
+                        var parser = new DOMParser();
+                        var xmlDoc = parser.parseFromString(ajax.responseText,"text/xml");
+                       // console.log(xmlDoc);
+                        var ats=xmlDoc.getElementsByTagName("LatLonBoundingBox")[0].attributes;
+                        var maxx=parseFloat(ats.maxx.value);
+                        var maxy=parseFloat(ats.maxy.value);
+                        var ats=xmlDoc.getElementsByTagName("BoundingBox")[0].attributes;
+                        var minx=parseFloat(ats.minx.value);
+                        var miny=parseFloat(ats.miny.value);
+                        console.log('minx :'+minx);
+                        console.log('miny : '+miny);
+                        console.log('maxx : '+maxx);
+                        console.log('maxy : '+maxy);
+                        console.log((minx+maxx)/2);
+                        console.log((miny+maxy)/2);
+                        map.setView([(miny+maxy)/2,(minx+maxx)/2],7);
+                        
+                      }
+                    };
+                    ajax.send();
+                    console.log(map.getBounds());
                     var google=L.tileLayer('http://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}', {
                         attribution: 'google'
                     });
