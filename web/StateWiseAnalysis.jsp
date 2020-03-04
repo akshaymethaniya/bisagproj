@@ -16,13 +16,13 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
         <title>State Wise Analysis Form</title>
         <style>
-            body{
+            /*body{
                 background-image: url('./background.png');
                 background-repeat: no-repeat;
                 background-size:cover;
                     
 
-            }
+            }*/
             .tooltip {
             position: relative;
             border-bottom: 1px dotted black;
@@ -313,118 +313,157 @@
             };
             
         </script>
+        <script>
+            // Script to open and close sidebar
+            function w3_open() {
+              document.getElementById("mySidebar").style.display = "block";
+              document.getElementById("myOverlay").style.display = "block";
+            }
+
+            function w3_close() {
+              document.getElementById("mySidebar").style.display = "none";
+              document.getElementById("myOverlay").style.display = "none";
+            }
+
+           
+            
+        </script>
     </head>
-    <body style="margin-left:32%;width:500px;margin-top: 10%;">
-        <div class="w3-container ">
-        <div class="w3-card-4" style="text-align: center;background-color: #668DAC;color:white;">
-            <h2>State Wise Analysis</h2>
-        </div>
-        <c:set var="b1" value="${STATE_OSM_ID}"></c:set>
-        <c:set var="i1" value="${ITEM_TO_COUNT}"></c:set>
-        <form action="LoadInitDataForStateWiseAnalysis" style="padding:10px;" method="get" class="w3-container w3-card-4 w3-light-grey">
-            <table id="mytable" >
-                <tr>
-                    <td> 
-                        <div class="w3-center w3-text-blue"><h3>FROM YEAR</h3></div>
-                    </td>
-                    <td>
-                        <div class="w3-center w3-text-blue"><h3>TO YEAR</h3></div>
-                    </td>
-                </tr>
-                <tr>            
+    <body>
+
+         <!-- Sidebar/menu -->
+        <nav class="w3-sidebar w3-red w3-collapse w3-top w3-large w3-padding" style="z-index:3;width:300px;font-weight:bold;" id="mySidebar"><br>
+          <a href="javascript:void(0)" onclick="w3_close()" class="w3-button w3-hide-large w3-display-topleft" style="width:100%;font-size:22px">Close Menu</a>
+          <div class="w3-container">
+            <h3 class="w3-padding-64"><b>Company<br>Name</b></h3>
+          </div>
+          <div class="w3-bar-block">
+            <a href="LoadInitDataForStateWiseAnalysis" onclick="w3_close()" class="w3-bar-item w3-button w3-white" style="text-transform:uppercase;">State Wise Analysis</a> 
+            <a href="LandFormHandleServlet" onclick="w3_close()" class="w3-bar-item w3-button w3-hover-white" style="text-transform:uppercase;">Lands</a> 
+          </div>
+        </nav>
+
+        <!-- Top menu on small screens -->
+        <header class="w3-container w3-top w3-hide-large w3-red w3-xlarge w3-padding">
+          <a href="javascript:void(0)" class="w3-button w3-red w3-margin-right" onclick="w3_open()">☰</a>
+          <span>Company Name</span>
+        </header>
+
+        <!-- Overlay effect when opening sidebar on small screens -->
+        <div class="w3-overlay w3-hide-large" onclick="w3_close()" style="cursor:pointer" title="close side menu" id="myOverlay"></div>
+        
+        <div class="w3-main" style="margin-left:340px;margin-right:40px">
+            <div class="w3-container" style="margin-top:75px">
+                <h1 class="w3-xxlarge w3-text-red" style="text-transform:uppercase;"><b>State Wise Analysis</b></h1>
+                <hr style="width:50px;border:5px solid red" class="w3-round">
+            </div>
+            <c:set var="b1" value="${STATE_OSM_ID}"></c:set>
+            <c:set var="i1" value="${ITEM_TO_COUNT}"></c:set>
+            <div class="w3-container w3-card-4 w3-light-grey ">
+                <form action="LoadInitDataForStateWiseAnalysis" style="padding:10px;" method="get" >
+                    <table id="mytable" >
+                        <tr>
+                            <td> 
+                                <div class="w3-center w3-text-red"><h3>FROM YEAR</h3></div>
+                            </td>
+                            <td>
+                                <div class="w3-center w3-text-red"><h3>TO YEAR</h3></div>
+                            </td>
+                        </tr>
+                        <tr>            
+                            <c:choose>
+                                <c:when test="${not empty propertiesList}">
+                                    <td>
+                                        <input type="number" id="fromyear" class="w3-input w3-border w3-light-grey"  min="2014" max="2019" value="${FROMYEAR}" name="fromyear" disabled="disabled">
+                                    </td>
+                                    <td>
+                                        <input type="number" id="toyear" class="w3-input w3-border w3-light-grey"  min="2014" max="2019" value="${TOYEAR}" name="toyear" disabled="disabled">
+                                    </td>
+                                    <input type="hidden" name="fromyear" value="${FROMYEAR}">
+                                    <input type="hidden" name="toyear" value="${TOYEAR}">
+                                </c:when>
+                                <c:otherwise>
+                                    <td>
+                                        <input type="number" id="fromyear" class="w3-input w3-border w3-light-grey" onchange="validate()" min="2014" max="2019" value="${FROMYEAR}" name="fromyear">
+                                    </td>
+                                    <td>
+                                        <input type="number" id="toyear" class="w3-input w3-border w3-light-grey" onchange="validate()" min="2014" max="2019" value="${TOYEAR}" name="toyear">
+                                    </td>
+                                </c:otherwise>
+                            </c:choose>
+                        </tr>
+                        <tr>
+                            <td>
+                                <select class="w3-select w3-border" name="state_osm_id">
+                                    <option value="" disabled selected>Choose State</option>
+                                        <c:forEach items="${stateMap}" var="state">
+                                            <c:set var="b2" value="${state.key}"></c:set>
+                                             <c:choose>
+                                                <c:when test="${b1 == b2}">
+                                                    <option value="${state.key}" selected>${state.value}</option>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <option  value="${state.key}">${state.value}</option>    
+                                                </c:otherwise>    
+                                            </c:choose>
+                                        </c:forEach>
+                                </select>
+                            </td>
+                            <td>        
+                                <select name="itemToCount"  class="w3-select w3-border"  id="itemToCount" <c:if test="${not empty propertiesList}"></c:if>>
+                                    <option value="" disabled selected>Choose Table</option>
+                                    <c:forEach items="${ITEMS_TO_COUNT}" var="item">
+                                        <c:set var="i2" value="${item}"></c:set>
+                                            <c:choose>
+                                            <c:when test="${i1 == i2}">
+                                                <option value="${item}" selected>${item}</option>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <option  value="${item}">${item}</option>    
+                                            </c:otherwise>    
+                                        </c:choose>
+                                    </c:forEach>
+                                </select>
+                            </td>
+                        </tr>
                     <c:choose>
                         <c:when test="${not empty propertiesList}">
-                            <td>
-                                <input type="number" id="fromyear" class="w3-input w3-border w3-light-grey"  min="2014" max="2019" value="${FROMYEAR}" name="fromyear" disabled="disabled">
-                            </td>
-                            <td>
-                                <input type="number" id="toyear" class="w3-input w3-border w3-light-grey"  min="2014" max="2019" value="${TOYEAR}" name="toyear" disabled="disabled">
-                            </td>
-                            <input type="hidden" name="fromyear" value="${FROMYEAR}">
-                            <input type="hidden" name="toyear" value="${TOYEAR}">
+                            <tr>
+                                <td>
+                                    <select name="properties" class="w3-select w3-border" id="properties_dropdownlist" style="width:available;" onsubmit="return false;">
+                                        <option  value="" disabled selected>SELECT PROPERTY</option>
+                                        <c:forEach items="${propertiesList}" var="prop">
+                                            <option value="${prop}">${prop}</option>     
+                                        </c:forEach>
+                                    </select>
+                                </td>
+                                <td><button name="addProp" class="w3-btn" style="width: 100%;background-color: #668DAC;color:white;" type="button"  onclick="addProperty()">ADD</button></td></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input type="submit" class="w3-btn " style="width: 100%;background-color: #668DAC;color:white;" name="filter" value="View Result">
+                                </td>
+                            </tr>
+
                         </c:when>
                         <c:otherwise>
-                            <td>
-                                <input type="number" id="fromyear" class="w3-input w3-border w3-light-grey" onchange="validate()" min="2014" max="2019" value="${FROMYEAR}" name="fromyear">
-                            </td>
-                            <td>
-                                <input type="number" id="toyear" class="w3-input w3-border w3-light-grey" onchange="validate()" min="2014" max="2019" value="${TOYEAR}" name="toyear">
-                            </td>
+                            <tr>
+                                <td>
+                                    <input type="submit" class="w3-btn" style="width: 100%;background-color: #668DAC;color:white;" name="loadProperties" value="Load Properties">
+                                </td>
+                            </tr>                 
                         </c:otherwise>
                     </c:choose>
-                </tr>
-                <tr>
-                    <td >
-                        <select class="w3-select w3-border" name="state_osm_id">
-                            <option value="" disabled selected>Choose State</option>
-                                <c:forEach items="${stateMap}" var="state">
-                                    <c:set var="b2" value="${state.key}"></c:set>
-                                     <c:choose>
-                                        <c:when test="${b1 == b2}">
-                                            <option value="${state.key}" selected>${state.value}</option>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <option  value="${state.key}">${state.value}</option>    
-                                        </c:otherwise>    
-                                    </c:choose>
-                                </c:forEach>
-                        </select>
-                    </td>
-                    <td>        
-                        <select name="itemToCount"  class="w3-select w3-border"  id="itemToCount" <c:if test="${not empty propertiesList}"></c:if>>
-                            <option value="" disabled selected>Choose Table</option>
-                            <c:forEach items="${ITEMS_TO_COUNT}" var="item">
-                                <c:set var="i2" value="${item}"></c:set>
-                                    <c:choose>
-                                    <c:when test="${i1 == i2}">
-                                        <option value="${item}" selected>${item}</option>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <option  value="${item}">${item}</option>    
-                                    </c:otherwise>    
-                                </c:choose>
-                            </c:forEach>
-                        </select>
-                    </td>
-                </tr>
-                
-                
-            <c:choose>
-                <c:when test="${not empty propertiesList}">
-                    <tr>
-                        <td>
-                            <select name="properties" class="w3-select w3-border" id="properties_dropdownlist" style="width:available;" onsubmit="return false;">
-                                <option  value="" disabled selected>SELECT PROPERTY</option>
-                                <c:forEach items="${propertiesList}" var="prop">
-                                    <option value="${prop}">${prop}</option>     
-                                </c:forEach>
-                            </select>
-                        </td>
-                        <td><button name="addProp" class="w3-btn" style="width: 100%;background-color: #668DAC;color:white;" type="button"  onclick="addProperty()">ADD</button></td></td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <input type="submit" class="w3-btn " style="width: 100%;background-color: #668DAC;color:white;" name="filter" value="View Result">
-                        </td>
-                    </tr>
-                    
-                </c:when>
-                <c:otherwise>
-                    <tr>
-                        <td>
-                            <input type="submit" class="w3-btn" style="width: 100%;background-color: #668DAC;color:white;" name="loadProperties" value="Load Properties">
-                        </td>
-                    </tr>                 
-                </c:otherwise>
-            </c:choose>
-            </table>
-            <p class="w3-text-red" id="error_mess">
-                <c:if test="${ not empty ERROR_MESS}">
-                    <i class="fa fa-warning" style="font-size:15px;color:red"></i>&nbsp;${ERROR_MESS}
-                </c:if>
-            </p>
-        </form>
+                    </table>
+                    <p class="w3-text-red" id="error_mess">
+                        <c:if test="${ not empty ERROR_MESS}">
+                            <i class="fa fa-warning" style="font-size:15px;color:red"></i>&nbsp;${ERROR_MESS}
+                        </c:if>
+                    </p>
+                </form>
+            </div>
         </div>
+        
     </body>
 </html>
 

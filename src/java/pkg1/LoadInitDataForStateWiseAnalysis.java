@@ -94,6 +94,7 @@ public class LoadInitDataForStateWiseAnalysis extends HttpServlet {
             YEARS[i]=fromyear+i;
         }
         request.setAttribute("YEARS", YEARS);
+       
         //Get Properties Button Clicked
         if(request.getParameter("loadProperties")!=null)
         {

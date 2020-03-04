@@ -11,6 +11,7 @@
 <%@ page import="com.google.gson.Gson"%>
 <%@ page import="com.google.gson.JsonObject"%>
 <%@page import="pkg1.Properties"%>
+<%@page import="pkg1.GeoServerConnectionData" %>
 <%
     //int  []YEARS={2014,2015,2016,2017,2018,2019}; 
     Integer []YEARS=(Integer [])request.getAttribute("YEARS");
@@ -46,6 +47,7 @@
 	
         <link rel="stylesheet" href="https://rawgit.com/k4r573n/leaflet-control-osm-geocoder/master/Control.OSMGeocoder.css" />
         <script src="./leaflet-provider.js"></script>
+        <script src="https://npmcdn.com/leaflet-geometryutil"></script>
         <script type="text/javascript">
             var map;
             var chart ;
@@ -53,21 +55,7 @@
             var QueryResult=[];
            var custom_polygon;
             var layer=null;
-            var ajax = new XMLHttpRequest();
-            ajax.open("GET", "http://localhost:8080/geoserver/bisag/view2019_lines/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities", true);
-            ajax.onreadystatechange = function () {
-              if (ajax.readyState === 4 && ajax.status === 200)
-              {
-                var parser = new DOMParser();
-                var xmlDoc = parser.parseFromString(ajax.responseText,"text/xml");
-                var ats=xmlDoc.getElementsByTagName("LatLonBoundingBox")[0].attributes;
-                var x=(parseFloat(ats.minx.value)+parseFloat(ats.maxx.value))/2;
-                var y=(parseFloat(ats.miny.value)+parseFloat(ats.maxy.value))/2;
-                console.log(y);
-                console.log(x);
-              }
-            };
-            ajax.send();
+            
             function applyColors()
             {
                 //QueryResult[0]   -- > For 2014 OR FROMYEAR
@@ -160,7 +148,10 @@
                             data: [{
                                     type: "column",
                                     dataPoints: dps
-                            }]
+                            }],options:{
+                                responsive: true,
+                                maintainAspectRatio: true
+                            }
                     });
                     chart.render();
 
@@ -217,7 +208,7 @@
                     var drawnItems = new L.FeatureGroup();
                     map.addLayer(drawnItems);
                     
-
+                    /* Draw Control START */
                     var drawControl = new L.Control.Draw({
                     draw: {
 				polygon: {
@@ -257,10 +248,12 @@
                             featureGroup: drawnItems
                         }
                     });
+                    /* Draw Control START */
+
                     //console.log(drawnItems.getBounds());
                     
-                   
-                        
+                   //Polygons On Which We Have Just Applied FilterByGeometry
+                    var polygons_filtered=L.featureGroup();
                     //L.polygon(coords, {color: 'red'});
                     <c:forEach items="${geometry}" var="geo">
                         var geometry_filtered=JSON.parse('${geo}');
@@ -273,21 +266,45 @@
                             a[i][1]=temp;
                         }
                         var poly=L.polygon(a, {color: 'red'});
-                        poly.addTo(map);
+                        poly.bindPopup('You Have Just Applied Filter Here.');
+                        poly.addTo(polygons_filtered);
+                        
                         //map.fitBounds(poly.getBounds());
                     </c:forEach>
+                    polygons_filtered.addTo(map);
+                    console.log(Object.entries(polygons_filtered._layers).length);
+                    if(Object.entries(polygons_filtered._layers).length !== 0)
+                    {
+                        map.fitBounds(polygons_filtered.getBounds());
+                    }
                     map.addControl(drawControl);
-                    
+                    var polygons_created=L.featureGroup();
+                    var ind=0;
                     map.on('draw:deleted',function(e){
-                        layer=null;
-                        var filterButton=document.getElementById("filterByGeometry");
-                        filterButton.disabled=true;
+                        var layers = e.layers;
+                        var layer_name="";
+                        
+                        layers.eachLayer(function(layer) {
+                               /*How to get layer type here? */
+                               //console.log(layer.name);
+                               layer_name=layer.name;
+                               polygons_created.removeLayer(layer);
+                        });
+                        if(Object.entries(polygons_created._layers).length !== 0)
+                            map.fitBounds(polygons_created.getBounds());
+                        //layer=null;
+                        if(Object.entries(polygons_created._layers).length === 0){
+                            //Disable Filter Button
+                            var filterButton=document.getElementById("filterByGeometry");
+                            filterButton.disabled=true;
+                        }
+                        //Delete Hidden Parameters
                         var form=document.getElementById("myform");
-                        var latlngs=document.getElementById("latlngs");
-                        var geometry=document.getElementById("geometry");
+                        var latlngs=document.getElementById("latlngs-"+layer_name);
+                        var geometry=document.getElementById("geometry-"+layer_name);
                         form.removeChild(latlngs);
                         form.removeChild(geometry);
-
+                       
                     });
                     map.on('draw:created', function (e) {
                         /*if(layer !== null)
@@ -297,10 +314,8 @@
                         } */   
                         var type = e.layerType;
                             layer = e.layer;
-                            var content="";
-                            layer.bindPopup(content);
-
-                            //console.log(layer);
+                            //console.log(layer.getBounds());
+                            
                             //console.log(layer.toGeoJSON());
                             if(type === 'polygon' || type === 'rectangle')
                             {
@@ -318,26 +333,30 @@
                                 //Enable The Filter Button On Map
                                 var filterButton=document.getElementById("filterByGeometry");
                                 filterButton.disabled=false;
-                                
+                                layer.name="layer"+(++ind);
+                                console.log(layer);
                                 //Create Hidden Field For Geometry Object
                                 var input = document.createElement("input");
-                                input.setAttribute("id","geometry");
+                                input.setAttribute("id","geometry-"+layer.name);
                                 input.setAttribute("type", "hidden");
                                 input.setAttribute("name", "geometry");
                                 input.setAttribute("value", JSON.stringify(geojson.geometry));
                                 console.log(JSON.stringify(geojson.geometry));
                                 var input1 = document.createElement("input");
-                                input1.setAttribute("id","latlngs");
+                                input1.setAttribute("id","latlngs-"+layer.name);
                                 input1.setAttribute("type", "hidden");
                                 input1.setAttribute("name", "latlngs");
                                 input1.setAttribute("value", JSON.stringify(layer._latlngs));
                                 
-                                 map.fitBounds(layer._latlngs);
                                  //console.log(JSON.stringify(layer._latlngs));
                                  //Append it to myform
                                  document.getElementById("myform").appendChild(input);
                                 
                                  document.getElementById("myform").appendChild(input1);
+                                 
+                                //Add Layer To polygons_created FeatureGroup
+                                layer.addTo(polygons_created);
+                                map.fitBounds(polygons_created.getBounds());
                             }
                             else if (type === 'circle') {
 
@@ -353,13 +372,7 @@
                         drawnItems.addLayer(layer);
                     });
                     
-                    /*if('${latlngs}')
-                    {
-                        var latlngs=JSON.parse('${latlngs}');
-                        console.log(latlngs);
-                        var polygon = L.polygon(latlngs, {color: 'red'}).addTo(map);
-                        map.fitBounds(polygon.getBounds());
-                    }*/
+                    
 
                     
                     var basicMap=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -372,7 +385,7 @@
                             
                         };
                     <%for(int year:YEARS){%>
-                    QueryResult[<%=year%>-<%=fromyear%>]=L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
+                    QueryResult[<%=year%>-<%=fromyear%>]=L.tileLayer.wms("http://"+'<%=GeoServerConnectionData.getHostWithPort()%>'+"/geoserver/wms", {
                             layers: '<%=lyr[year-fromyear]%>',
                             transparent:true,
                             styles:'<%=st[year-fromyear]%>',
@@ -382,7 +395,34 @@
                     });
                     overlayLayers["QueryResult-"+<%=year%>]=QueryResult[<%=year%>-<%=fromyear%>];
                     <%}%>
+                    QueryResult[0].addTo(map);
                     
+                    var ajax = new XMLHttpRequest();
+                    ajax.open("GET", "http://"+'<%=GeoServerConnectionData.getHostWithPort()%>'+"/geoserver/bisag/view2014_lines/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities", true);
+                    ajax.onreadystatechange = function () {
+                      if (ajax.readyState === 4 && ajax.status === 200)
+                      {
+                        var parser = new DOMParser();
+                        var xmlDoc = parser.parseFromString(ajax.responseText,"text/xml");
+                       // console.log(xmlDoc);
+                        var ats=xmlDoc.getElementsByTagName("LatLonBoundingBox")[0].attributes;
+                        var maxx=parseFloat(ats.maxx.value);
+                        var maxy=parseFloat(ats.maxy.value);
+                        var ats=xmlDoc.getElementsByTagName("BoundingBox")[0].attributes;
+                        var minx=parseFloat(ats.minx.value);
+                        var miny=parseFloat(ats.miny.value);
+                        console.log('minx :'+minx);
+                        console.log('miny : '+miny);
+                        console.log('maxx : '+maxx);
+                        console.log('maxy : '+maxy);
+                        console.log((minx+maxx)/2);
+                        console.log((miny+maxy)/2);
+                        map.setView([(miny+maxy)/2,(minx+maxx)/2],7);
+                        
+                      }
+                    };
+                    ajax.send();
+                    console.log(map.getBounds());
                     var google=L.tileLayer('http://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}', {
                         attribution: 'google'
                     });
@@ -433,7 +473,7 @@
                             //console.log(HEIGHT);
                             //console.log(BBOX);
                             //var LAYERS='bisag:myview_2014,bisag:myview_2015,bisag:myview_2016,bisag:myview_2017,bisag:myview_2018,bisag:myview_2019';
-                            var URL='http://localhost:8080/geoserver/bisag/wms?'+
+                            var URL='http://'+'<%=GeoServerConnectionData.getHostWithPort()%>'+'/geoserver/bisag/wms?'+
                                     'SERVICE=WMS&'+
                                     'VERSION=1.1.1&'+
                                     'REQUEST=GetFeatureInfo&'+
@@ -539,13 +579,8 @@
                 
         </script>
         <style>
-            html, body {
-                        height: 100%;
-                        margin: 10px;
-                }
-            #map {       
-                 height: 400px;
-            }
+            
+            
             input[type="color"] {
                 padding:0px;
                 border:0px;
@@ -555,87 +590,137 @@
                 grid-template-columns: auto 100px;
                 grid-gap: 10px;
               }
+            body,h1,h2,h3,h4,h5 {font-family: "Poppins", sans-serif}
+            body {font-size:16px;}
+            .w3-half img{margin-bottom:-6px;margin-top:16px;opacity:0.8;cursor:pointer}
+            .w3-half img:hover{opacity:1}
         </style>
+        <script>
+            // Script to open and close sidebar
+            function w3_open() {
+              document.getElementById("mySidebar").style.display = "block";
+              document.getElementById("myOverlay").style.display = "block";
+            }
+
+            function w3_close() {
+              document.getElementById("mySidebar").style.display = "none";
+              document.getElementById("myOverlay").style.display = "none";
+            }
+
+            // Modal Image Gallery
+            function onClick(element) {
+              document.getElementById("img01").src = element.src;
+              document.getElementById("modal01").style.display = "block";
+              var captionText = document.getElementById("caption");
+              captionText.innerHTML = element.alt;
+            }
+            
+        </script>
     </head>
     <body>
-        <div style="padding: 20px;border:2px solid;">
-            <form action="LoadInitDataForStateWiseAnalysis"  method="get" id="myform">
-            <div>
-                <table class="w3-table w3-border w3-responsive w3-card-4">
-                    <tr>
-                        <% for(int year:YEARS){%>
-                            <td><input type="color" id="color_<%=year%>" value="#<%=COLORS[year-fromyear]%>"></td>
-                            <td><%=year%></td>
-                        <%}%>
-                        
-                    </tr>
-                    
-                </table>
-                <br>
-                <table>
-                    <tr>
-                        <td>
-                            <input type="button" class="w3-btn" style='background-color: #668DAC;color:white;' id="applyCs" onclick="applyColors()" name="applyCs" value="Apply Colors">
-                        </td>
-                        
-                    </tr>
-                </table>
-                <div>
-                    <h2 style="text-transform: uppercase;">Analysis Of <b>${STATE_NAME}</b></h2>
-                    <h3 style="text-transform: uppercase;"><b>Properties</b> Applied</h3>
-                    
-                    <table class="w3-table w3-border w3-responsive w3-card-4">
-                        <c:forEach items="${propsMapForQuery}" var="prop">
-                            <tr>
-                                <td style="text-transform: uppercase;"><b>${prop.getKey()}</b></td>
-                                <td>:</td>
-                                <td style="text-transform: uppercase;">${prop.getValue()[0]}</td>
-                            </tr>
-                        </c:forEach>
-                    </table>
-                </div>
+        <!-- Sidebar/menu -->
+        <nav class="w3-sidebar w3-red w3-collapse w3-top w3-large w3-padding" style="z-index:3;width:300px;font-weight:bold;" id="mySidebar"><br>
+          <a href="javascript:void(0)" onclick="w3_close()" class="w3-button w3-hide-large w3-display-topleft" style="width:100%;font-size:22px">Close Menu</a>
+          <div class="w3-container">
+            <h3 class="w3-padding-64"><b>Company<br>Name</b></h3>
+          </div>
+          <div class="w3-bar-block">
+            <a href="LoadInitDataForStateWiseAnalysis" onclick="w3_close()" class="w3-bar-item w3-button w3-white" style="text-transform:uppercase;">State Wise Analysis</a> 
+            <a href="LandFormHandleServlet" onclick="w3_close()" class="w3-bar-item w3-button w3-hover-white" style="text-transform:uppercase;">Lands</a> 
+          </div>
+        </nav>
 
-            </div>
-                <div style="float:left;width:40%;height:100%;" >
-                <br>
-                <input type="text" style="width:50%;" placeholder="Enter CQL Filter (Map Only)" class="w3-input w3-border w3-round w3-animate-input" id="cql_filter">
-                <br>
-                <input type="button" class="w3-btn" style="background-color: #668DAC;color:white;" id="applyCqlFilter" name="applyFilter" onclick="applyCQLFilter()" value="Apply Filter">
-                
-                    <h1>Chart</h1>
-                    <div id="chartContainer"style="width:100%;height: 100%;" ></div>
+        <!-- Top menu on small screens -->
+        <header class="w3-container w3-top w3-hide-large w3-red w3-xlarge w3-padding">
+          <a href="javascript:void(0)" class="w3-button w3-red w3-margin-right" onclick="w3_open()">☰</a>
+          <span>Company Name</span>
+        </header>
+
+        <!-- Overlay effect when opening sidebar on small screens -->
+        <div class="w3-overlay w3-hide-large" onclick="w3_close()" style="cursor:pointer" title="close side menu" id="myOverlay"></div>
+
+        <!-- !PAGE CONTENT! -->
+        <div class="w3-main" style="margin-left:340px;margin-right:40px">
+            <form action="LoadInitDataForStateWiseAnalysis"  method="get" id="myform">
+                <div class="w3-container" style="margin-top:75px">
+                    <h1 class="w3-xxlarge w3-text-red"><b>COLORS</b></h1>
+                    <hr style="width:50px;border:5px solid red" class="w3-round">
+                       
+                    <table class="w3-table w3-border w3-responsive w3-card-4">
+                        <tr>
+                            <% for(int year:YEARS){%>
+                                <td><input type="color" id="color_<%=year%>" value="#<%=COLORS[year-fromyear]%>"></td>
+                                <td><%=year%></td>
+                            <%}%>
+
+                        </tr>
+                      
+                    </table>
+                    <br>
+                    <table>
+                        <tr>
+                            <td>
+                              <input type="button" class="w3-btn" style='background-color: #668DAC;color:white;' id="applyCs" onclick="applyColors()" name="applyCs" value="Apply Colors">
+                            </td>
+                        
+                        </tr>
+                    </table>   
+                    
                 </div>
-                <div style="width:60%;height: 70%;float:right;">
-                    <br>    
-                    <input type="text" style="width:50%;" placeholder="Enter Coordinates To Draw Polygon  e.g. [[48,-3],[50,5],[44,11],[48,-3]]" class="w3-input w3-border w3-round w3-animate-input"  name="coordPolygon" id="coordPolygon"/><br>
-                    <div class="grid-container">
-                        <div><input type="button" onclick="drawPolygon()" class="w3-btn" style="background-color: #668DAC;color:white;" value="Draw"/><br></div> 
-                        <div><input type="submit" class="w3-btn" style="background-color: #668DAC;color:white;" id="filterByGeometry" name="filterByGeometry" value="Filter" disabled="true"></div>
+                <div class="w3-container" style="margin-top:75px">
+                    <h1 class="w3-xxlarge w3-text-red" style="text-transform: uppercase;">Analysis Of <b>${STATE_NAME}</b></h1>
+                    <hr style="width:50px;border:5px solid red" class="w3-round">
+                    <h3 class="w3-xlarge w3-text-red" style="text-transform : uppercase"><b>Properties</b> Applied</h3>
+                    <div class="w3-half">
+                        <ul class="w3-ul w3-light-grey">
+                            <c:forEach items="${propsMapForQuery}" var="prop">
+                                <li style="text-transform: uppercase;"><b>${prop.getKey()}</b> : ${prop.getValue()[0]}</li>
+                            </c:forEach>
+                        </ul>
                     </div>
                     
+                </div>
+                <div class="w3-container" style="margin-top:75px;width:100%;">
+                    <h1 class="w3-xxlarge w3-text-red" style="text-transform: uppercase;">Chart</h1>
+                    <hr style="width:50px;border:5px solid red" class="w3-round">               
+                </div>
+                <div id="chartContainer" class="w3-center" style="margin-top:75px;overflow:auto;height:500px;" ></div>
+
+                <div class="w3-container" style="margin-top:100px;width:100%;height:500px;">
+                    <h1 class="w3-xxlarge w3-text-red" style="text-transform: uppercase;">Map</h1>
+                    <hr style="width:50px;border:5px solid red" class="w3-round"> 
+                    <input type="text" style="width:50%;" placeholder="Enter CQL Filter (Map Only)" class="w3-input w3-border w3-round w3-animate-input" id="cql_filter">
+                    <br>
+                    <input type="button" class="w3-btn" style="background-color: #668DAC;color:white;" id="applyCqlFilter" name="applyFilter" onclick="applyCQLFilter()" value="Apply Filter">
+                    <br><br>
+                    <input type="text" style="width:50%;" placeholder="Enter Coordinates To Draw Polygon  e.g. [[48,-3],[50,5],[44,11],[48,-3]]" class="w3-input w3-border w3-round w3-animate-input"  name="coordPolygon" id="coordPolygon"/>
+                    <br>
+                    <div class="grid-container">
+                        <div><input type="button" onclick="drawPolygon()" class="w3-btn" style="background-color: #668DAC;color:white;" value="Draw"/></div> 
+                        <div><input type="submit" class="w3-btn" style="background-color: #668DAC;color:white;" id="filterByGeometry" name="filterByGeometry" value="Filter" disabled="true"></div>
+                    </div>
+                    <br>
                     <!--HIDDEN DATA-->
                     <input type="hidden" name="state_osm_id" value="${STATE_OSM_ID}">
                     <input type="hidden" name="itemToCount" value="${ITEM_TO_COUNT}">
                     <input type="hidden" name="fromyear" value="${FROMYEAR}">
                     <input type="hidden" name="toyear" value="${TOYEAR}">
                     <!-- HIDDEN DATA ENDS-->
+
                     <c:forEach items="${propsMapForQuery}" var="prop">
                         <input type="hidden" name="${prop.key}" value="${prop.value[0]}">
                     </c:forEach>
 
-                    <div>
-                        <h1>Map</h1>
-                        <div id="map">
-                        </div>
+                    <div id="map" style="width:100%;height: 100%;z-index:0;" >
                     </div>
+                    <div id="info" style="width:100%;height:auto;overflow-x: scroll;">
 
+                    </div>
                 </div>
-                <div id="info" style="width:100%;height:auto;overflow-x: scroll;">
-
-                </div>
-            
+                
             </form>
         </div>
+
         <script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
     </body>
 </html>
