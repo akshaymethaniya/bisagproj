@@ -12,6 +12,10 @@
         <servlet-name>FilterByGeometryOnMapServlet</servlet-name>
         <servlet-class>pkg1.FilterByGeometryOnMapServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>LandFormHandleServlet</servlet-name>
+        <servlet-class>pkg1.LandFormHandleServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>StateWiseAnalysisServlet</servlet-name>
         <url-pattern>/StateWiseAnalysisServlet</url-pattern>
@@ -23,6 +27,10 @@
     <servlet-mapping>
         <servlet-name>FilterByGeometryOnMapServlet</servlet-name>
         <url-pattern>/FilterByGeometryOnMapServlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>LandFormHandleServlet</servlet-name>
+        <url-pattern>/LandFormHandleServlet</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>
