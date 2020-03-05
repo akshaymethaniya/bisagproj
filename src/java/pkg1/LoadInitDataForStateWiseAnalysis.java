@@ -75,6 +75,7 @@ public class LoadInitDataForStateWiseAnalysis extends HttpServlet {
         request.setAttribute("ITEM_TO_COUNT",ITEM_TO_COUNT);
         request.setAttribute("FROMYEAR",fromyear);
         request.setAttribute("TOYEAR",toyear);
+        request.setAttribute("lands", CRUDLand.getLands());
 
         
         String toForward="StateWiseAnalysis.jsp";

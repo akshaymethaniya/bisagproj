@@ -64,9 +64,7 @@
             select{
                 display: block;
             }
-            td{
-                width: 50%;
-            }
+           
             .autocomplete {
                 position: relative;
                 display: inline-block;
@@ -256,6 +254,7 @@
                 input.type = "text";
                 input.name = text;
                 input.value= "*";
+                input.setAttribute("class","w3-input w3-border w3-light-grey");
                 input.placeholder="Enter Value Of "+text;
                 var possibleValues=[];
                 //console.log(data[text]);
@@ -304,12 +303,13 @@
             }
             
             window.onload = function() {
+                <% if(request.getParameter("loadProperties")!=null){%>
                 var x=document.getElementById("properties_dropdownlist").options;
                 for(var i=0;i<x.length;i++){
                     if(props[x[i].text])
                         x[i].title=props[x[i].text];
                 }
-            
+                <%}%>
             };
             
         </script>
@@ -335,7 +335,7 @@
         <nav class="w3-sidebar w3-red w3-collapse w3-top w3-large w3-padding" style="z-index:3;width:300px;font-weight:bold;" id="mySidebar"><br>
           <a href="javascript:void(0)" onclick="w3_close()" class="w3-button w3-hide-large w3-display-topleft" style="width:100%;font-size:22px">Close Menu</a>
           <div class="w3-container">
-            <h3 class="w3-padding-64"><b>Company<br>Name</b></h3>
+              <h3 class="w3-padding-64" style="text-transform:uppercase;"><b>Growth<br>Analyzer</b></h3>
           </div>
           <div class="w3-bar-block">
             <a href="LoadInitDataForStateWiseAnalysis" onclick="w3_close()" class="w3-bar-item w3-button w3-white" style="text-transform:uppercase;">State Wise Analysis</a> 
@@ -346,7 +346,7 @@
         <!-- Top menu on small screens -->
         <header class="w3-container w3-top w3-hide-large w3-red w3-xlarge w3-padding">
           <a href="javascript:void(0)" class="w3-button w3-red w3-margin-right" onclick="w3_open()">☰</a>
-          <span>Company Name</span>
+          <span>Growth Analyzer</span>
         </header>
 
         <!-- Overlay effect when opening sidebar on small screens -->
@@ -409,8 +409,8 @@
                                         </c:forEach>
                                 </select>
                             </td>
-                            <td>        
-                                <select name="itemToCount"  class="w3-select w3-border"  id="itemToCount" <c:if test="${not empty propertiesList}"></c:if>>
+                            <td>
+                                <select name="itemToCount"  class="w3-select w3-border"  id="itemToCount">
                                     <option value="" disabled selected>Choose Table</option>
                                     <c:forEach items="${ITEMS_TO_COUNT}" var="item">
                                         <c:set var="i2" value="${item}"></c:set>
