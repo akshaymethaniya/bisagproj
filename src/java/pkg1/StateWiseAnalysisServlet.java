@@ -88,6 +88,7 @@ public class StateWiseAnalysisServlet extends HttpServlet {
         request.setAttribute("countList",list);
         //request.setAttribute("YEARS", YEARS);
         request.setAttribute("STATE_NAME",States.getStateName(STATE_OSM_ID));
+
         RequestDispatcher rd=request.getRequestDispatcher("StateWiseAnalysisResult.jsp"); 
         rd.forward(request, response);
 

@@ -2,7 +2,9 @@
     Document   : landJSP
     Created on : 3 Mar, 2020, 11:22:43 AM
     Author     : FOR ORACLE
---%>
+--%><%@page import="pkg1.Land"%>
+<%@page import="java.util.List"%>
+
 
 ​
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
@@ -21,6 +23,9 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+        <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
+        <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
+        
         <style>
 			html, body {
 				height: 100%;
@@ -30,23 +35,34 @@
 				width: 100%;
 				height: 90%;
 			}
+                        .w3-myfont {
+                            font-family: "Comic Sans MS", cursive, sans-serif;
+                        }
         </style>
         <script type="text/javascript">
 		var map;
+                var landsData;
+                function fitBounds(id){
+                    landsData.eachLayer(function(layer) {
+                        if(layer.name === id)
+                        {
+                            map.fitBounds(layer.getBounds());
+                        }
+                    });
+                }
 		function init() {
 			
 			// create map and set center and zoom level
 			map = new L.map('map',{
 				crs: L.CRS.EPSG3857,
-				cursor: true
+				cursor: true,
+                                fullscreenControl: true
+                                
 			}).setView([22.74312, 72],7);
 			
                         
-			L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-				maxZoom: 19,
-				attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap contributors</a>'
-			}).addTo(map);	
-                        var landsData=L.featureGroup();
+			
+                       landsData=L.featureGroup();
                         <c:forEach items="${lands}" var="landObj">
                                 console.log('${landObj.getName()}');
                                 var geom=JSON.parse('${landObj.getPolygon_geo()}');
@@ -59,11 +75,12 @@
                                     a[i][1]=temp;
                                 }
                                 var poly=L.polygon(a, {color: 'green'});
+                                poly["name"]='${landObj.getID()}';
                                 var geom=JSON.stringify(JSON.parse('${landObj.getPolygon_geo()}'), null, 4);
                                 var content=
                                 `
                                 <form action="LandFormHandleServlet" method="post">
-                                <h3>Place Details</h3><table>
+                                <h3 class="w3-text-red">Place Details</h3><table>
                                 <tr>
                                   <td>Name</td>
                                   <td>  <input type="text" id="name" name="name" placeholder="Name of the place" value='${landObj.getName()}'>
@@ -83,7 +100,7 @@
                                 </tr>
                               </table>`+
                                 `
-                                    <h3>Polygon Details</h3>
+                                    <h3 class="w3-text-red">Polygon Details</h3>
                                     <table>
                                         <tr>
                                             <td>Geometry</td>
@@ -102,8 +119,15 @@
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td><input type="submit" name="update_poly" value="UPDATE">
-                                            <input type="submit" name="remove_poly" value="REMOVE"></td>
+                                            <td>
+                                                <input type="button" class="w3-btn w3-red" name="fit_bounds" value="FIT BOUNDS" onclick="fitBounds('${landObj.getID()}')">
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <input type="submit" class="w3-btn w3-red" name="update_poly" value="UPDATE">
+                                                <input type="submit" class="w3-btn w3-red" name="remove_poly" value="REMOVE">
+                                            </td>
                                         </tr>
                                     </table>
                                     <input type="hidden" name="polygon_id" value="${landObj.getID()}">
@@ -158,6 +182,26 @@
                     });
 		map.addControl(drawControl);
                 
+                var basicMap=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+                }).addTo(map);		
+
+                var google=L.tileLayer('http://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}', {
+                    attribution: 'google'
+                });
+                
+                var overlayLayers={
+                    "landsData":landsData
+                };
+                
+                L.control.layers({
+                    "Basic":basicMap,
+                    "google":google
+                    },
+                    overlayLayers
+                ).addTo(map);
+
                 map.on('draw:created', function (e) {
                         /*if(layer !== null)
                         {
@@ -262,7 +306,7 @@
         <nav class="w3-sidebar w3-red w3-collapse w3-top w3-large w3-padding" style="z-index:3;width:300px;font-weight:bold;" id="mySidebar"><br>
           <a href="javascript:void(0)" onclick="w3_close()" class="w3-button w3-hide-large w3-display-topleft" style="width:100%;font-size:22px">Close Menu</a>
           <div class="w3-container">
-            <h3 class="w3-padding-64"><b>Company<br>Name</b></h3>
+              <h3 class="w3-padding-64" class="w3-myfont" style="text-transform:uppercase;"><b>Growth<br>Analyzer</b></h3>
           </div>
           <div class="w3-bar-block">
             <a href="LoadInitDataForStateWiseAnalysis" onclick="w3_close()" class="w3-bar-item w3-button w3-hover-white" style="text-transform:uppercase;">State Wise Analysis</a> 
@@ -273,18 +317,18 @@
         <!-- Top menu on small screens -->
         <header class="w3-container w3-top w3-hide-large w3-red w3-xlarge w3-padding">
           <a href="javascript:void(0)" class="w3-button w3-red w3-margin-right" onclick="w3_open()">☰</a>
-          <span>Company Name</span>
+          <span class="w3-myfont">Growth Analyzer</span>
         </header>
 
         <!-- Overlay effect when opening sidebar on small screens -->
         <div class="w3-overlay w3-hide-large" onclick="w3_close()" style="cursor:pointer" title="close side menu" id="myOverlay"></div>
 
         <!-- !PAGE CONTENT! -->
-        <div class="w3-main" style="margin-left:340px;margin-right:40px">
-            <div class="w3-container" style="margin-top:75px">
+        <div class="w3-main" style="margin-left:340px;margin-right:40px;margin-bottom: 40px;">
+            <div class="w3-container" style="margin-top:50px">
                 <h1 class="w3-xxlarge w3-text-red" style="text-transform:uppercase;"><b>Manage Lands</b></h1>
                 <hr style="width:50px;border:5px solid red" class="w3-round">
-                <div id="map" style="width:100%;height: 100%;z-index:0;"></div>
+                <div id="map" class="w3-card-4 w3-border" style="width:100%;height: 500px;z-index:0;"></div>
             </div>
         </div>
     </body>

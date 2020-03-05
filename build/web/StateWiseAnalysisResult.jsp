@@ -55,7 +55,15 @@
             var QueryResult=[];
            var custom_polygon;
             var layer=null;
-            
+            var landsData;
+            function fitBounds(id){
+                landsData.eachLayer(function(layer) {
+                    if(layer.name === id)
+                    {
+                        map.fitBounds(layer.getBounds());
+                    }
+                });
+            }
             function applyColors()
             {
                 //QueryResult[0]   -- > For 2014 OR FROMYEAR
@@ -372,6 +380,76 @@
                         drawnItems.addLayer(layer);
                     });
                     
+                    landsData=L.featureGroup();
+                    <c:forEach items="${lands}" var="landObj">
+                            console.log('${landObj.getName()}');
+                            var geom=JSON.parse('${landObj.getPolygon_geo()}');
+                            console.log(geom.coordinates[0]);
+                            var a=geom.coordinates[0];
+                            for(var i=0;i<a.length;i++)
+                            {
+                                var temp=a[i][0];
+                                a[i][0]=a[i][1];
+                                a[i][1]=temp;
+                            }
+                            var poly=L.polygon(a, {color: 'green'});
+                            var geom=JSON.stringify(JSON.parse('${landObj.getPolygon_geo()}'), null, 4);
+                            poly["name"]='${landObj.getID()}';
+
+                            var content=
+                            `
+                            
+                            <h3 class="w3-text-red">Place Details</h3><table>
+                            <tr>
+                              <td>Name</td>
+                              <td>  <input type="text" id="name" name="name" placeholder="Name of the place" value='${landObj.getName()}' disabled>
+                          </td>
+                            </tr>
+                            <tr>
+                              <td>Population</td>
+                              <td><input type="number" id="population" min="0" name="population" value="${landObj.getPopulation()}" disabled></td>
+                            </tr>
+                            <tr>
+                              <td>Famous place</td>
+                              <td><input type="text" id="famous_place" name="famousplace" placeholder="list of famous place" value="${landObj.getFamous_place()}" disabled></td>
+                            </tr>
+                            <tr>
+                              <td>Area(ha)</td>
+                              <td><input type="number" id="area" name="area" step="any" value='${landObj.getArea()}' disabled></td>
+                            </tr>
+                          </table>`+
+                            `
+                                <h3 class="w3-text-red">Polygon Details</h3>
+                                <table>
+                                    <tr>
+                                        <td>Geometry</td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <textarea rows="5" cols="36" name="polygon_geo" disabled>`+geom+`</textarea>
+                                    </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <p><b>Created</b> : ${landObj.getCreated()}</p>​
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <input type="button" class="w3-btn w3-red" name="fit_bounds" value="FIT BOUNDS" onclick="fitBounds('${landObj.getID()}')">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                          <p style="text-transform:uppercase;"><b>NOTE</b> : To Modify Visit <a href="LandFormHandleServlet">Lands</a> Page</p> 
+                                        </td>
+                                    </tr>
+                                </table>
+                                `;
+
+                            poly.bindPopup(content);
+                            poly.addTo(landsData);
+                    </c:forEach>
                     
 
                     
@@ -382,7 +460,6 @@
                     
                     var Esri_WorldImagery=L.tileLayer.provider('Esri.WorldImagery');
                     var overlayLayers={
-                            
                         };
                     <%for(int year:YEARS){%>
                     QueryResult[<%=year%>-<%=fromyear%>]=L.tileLayer.wms("http://"+'<%=GeoServerConnectionData.getHostWithPort()%>'+"/geoserver/wms", {
@@ -396,7 +473,7 @@
                     overlayLayers["QueryResult-"+<%=year%>]=QueryResult[<%=year%>-<%=fromyear%>];
                     <%}%>
                     QueryResult[0].addTo(map);
-                    
+                    overlayLayers["Lands"]=landsData;
                     var ajax = new XMLHttpRequest();
                     ajax.open("GET", "http://"+'<%=GeoServerConnectionData.getHostWithPort()%>'+"/geoserver/bisag/view2014_lines/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities", true);
                     ajax.onreadystatechange = function () {
@@ -499,19 +576,22 @@
                             });*/
                             //popup.setLatLng(e.latlng);
                             //popup.setContent("<iframe src='"+URL+"' width='500' height='500' frameborder='0'></iframe>");
-                            document.getElementById('info').innerHTML = '<iframe seamless src="' + URL + '" style="width:500px;height:auto;"></iframe>';
+                            //document.getElementById('info').innerHTML = '<iframe seamless src="' + URL + '" style="width:500px;height:auto;"></iframe>';
                             fetch(URL)
                               .then((response) => response.text())
                               .then((html) => {
                                   var el = document.createElement( 'html' );
                                   el.innerHTML=html;
                                   
-                                  var header= '<h2>PROPERTIES</h2>';
+                                  var header= `     <h1 class="w3-xxlarge w3-text-red" style="overflow: hidden;text-transform:uppercase;"><b>Properties</b></h1>
+                                                    <hr style="width:50px;border:5px solid red" class="w3-round">
+                                                `;
                                   //var filter='<input type="text" style="width:30%;" placeholder="Enter CQL Filter" class="w3-input w3-border w3-round w3-animate-input" id="cql_filter">';    
                                   //var apply_button='<input type="button" class="w3-btn w3-teal" id="applyCqlFilter" name="applyFilter" onclick="applyCQLFilter()" value="Apply Filter">';
                                   /*if(el.getElementsByTagName('table').length)
                                     document.getElementById('info').innerHTML = header+filter+'<br>'+apply_button+'<br><br>'+ html;
                                   else*/
+                               
                                   document.getElementById('info').innerHTML = header+html;
 
                               });
@@ -594,6 +674,13 @@
             body {font-size:16px;}
             .w3-half img{margin-bottom:-6px;margin-top:16px;opacity:0.8;cursor:pointer}
             .w3-half img:hover{opacity:1}
+            .sticky{
+                position: -webkit-sticky;
+                position: sticky;
+                top:68px;
+                background-color: grey;
+                z-index: 3;
+            }
         </style>
         <script>
             // Script to open and close sidebar
@@ -622,7 +709,7 @@
         <nav class="w3-sidebar w3-red w3-collapse w3-top w3-large w3-padding" style="z-index:3;width:300px;font-weight:bold;" id="mySidebar"><br>
           <a href="javascript:void(0)" onclick="w3_close()" class="w3-button w3-hide-large w3-display-topleft" style="width:100%;font-size:22px">Close Menu</a>
           <div class="w3-container">
-            <h3 class="w3-padding-64"><b>Company<br>Name</b></h3>
+              <h3 class="w3-padding-64" style="text-transform:uppercase;"><b>Growth<br>Analyzer</b></h3>
           </div>
           <div class="w3-bar-block">
             <a href="LoadInitDataForStateWiseAnalysis" onclick="w3_close()" class="w3-bar-item w3-button w3-white" style="text-transform:uppercase;">State Wise Analysis</a> 
@@ -631,9 +718,9 @@
         </nav>
 
         <!-- Top menu on small screens -->
-        <header class="w3-container w3-top w3-hide-large w3-red w3-xlarge w3-padding">
+        <header class="w3-container w3-top w3-hide-large w3-red w3-xlarge w3-padding" style="z-index:10">
           <a href="javascript:void(0)" class="w3-button w3-red w3-margin-right" onclick="w3_open()">☰</a>
-          <span>Company Name</span>
+          <span>Growth Analyzer</span>
         </header>
 
         <!-- Overlay effect when opening sidebar on small screens -->
@@ -642,7 +729,7 @@
         <!-- !PAGE CONTENT! -->
         <div class="w3-main" style="margin-left:340px;margin-right:40px">
             <form action="LoadInitDataForStateWiseAnalysis"  method="get" id="myform">
-                <div class="w3-container" style="margin-top:75px">
+                <div class="w3-container" style="margin-top:75px;">
                     <h1 class="w3-xxlarge w3-text-red"><b>COLORS</b></h1>
                     <hr style="width:50px;border:5px solid red" class="w3-round">
                        
@@ -668,17 +755,25 @@
                     
                 </div>
                 <div class="w3-container" style="margin-top:75px">
-                    <h1 class="w3-xxlarge w3-text-red" style="text-transform: uppercase;">Analysis Of <b>${STATE_NAME}</b></h1>
+                    <h1 class="w3-xxlarge w3-text-red" style="text-transform: uppercase;">Analysis Of <b class="w3-text-black">${STATE_NAME}</b></h1>
                     <hr style="width:50px;border:5px solid red" class="w3-round">
-                    <h3 class="w3-xlarge w3-text-red" style="text-transform : uppercase"><b>Properties</b> Applied</h3>
+                    <h3 class="w3-xlarge w3-text-red" style="text-transform : uppercase"><b class="w3-text-black">Properties</b> Applied</h3>
                     <div class="w3-half">
                         <ul class="w3-ul w3-light-grey">
                             <c:forEach items="${propsMapForQuery}" var="prop">
-                                <li style="text-transform: uppercase;"><b>${prop.getKey()}</b> : ${prop.getValue()[0]}</li>
+                                <li style="text-transform: uppercase;"><b class="w3-text-black">${prop.getKey()}</b> : ${prop.getValue()[0]}</li>
                             </c:forEach>
                         </ul>
+                    </div>                   
+                </div>
+                <div class="w3-container" style="margin-top:10px;">
+                    <h1 class="w3-xlarge w3-text-red" style="text-transform: uppercase;"><b class="w3-text-black">Table</b></h1>
+                    <hr style="width:50px;border:5px solid red" class="w3-round">
+                    <div class="w3-half">
+                        <ul class="w3-ul w3-light-grey">
+                            <li><b>${ITEM_TO_COUNT}</b></li>
+                        </ul>
                     </div>
-                    
                 </div>
                 <div class="w3-container" style="margin-top:75px;width:100%;">
                     <h1 class="w3-xxlarge w3-text-red" style="text-transform: uppercase;">Chart</h1>
@@ -711,10 +806,9 @@
                         <input type="hidden" name="${prop.key}" value="${prop.value[0]}">
                     </c:forEach>
 
-                    <div id="map" style="width:100%;height: 100%;z-index:0;" >
+                    <div id="map" class="w3-card-4 w3-border" style="width:100%;height: 100%;z-index:0;" >
                     </div>
-                    <div id="info" style="width:100%;height:auto;overflow-x: scroll;">
-
+                    <div id="info" class="w3-container" style="width:100%;margin-top:75px;overflow-x: scroll;">
                     </div>
                 </div>
                 
