@@ -33,7 +33,16 @@ public class CalculateCount  {
     String STATE_OSM_ID;
     Map<String, String[]> parameters;
     String []geometry;
+    public double x_bbox;
+    public double y_bbox;
 
+    public double getX_bbox() {
+        return x_bbox;
+    }
+
+    public double getY_bbox() {
+        return y_bbox;
+    }
     public CalculateCount(String itemToCount, int year, String STATE_OSM_ID, Map<String, String[]> parameters, String []geometry) {
         this.itemToCount = itemToCount;
         this.year = year;
@@ -109,6 +118,18 @@ public class CalculateCount  {
             st.execute(dropViewSql);
             st.execute(createViewSql);
             
+            String cal_bboxSql="SELECT (st_xmin(ST_Extent(ST_Transform(way,4326)))+st_xmax(ST_Extent(ST_Transform(way,4326))))/2 as x,"+
+                    "(st_ymin(ST_Extent(ST_Transform(way,4326)))+st_ymax(ST_Extent(ST_Transform(way,4326))))/2 as y "+FROM_PART+WHERE_PART;
+            //System.out.println(cal_bboxSql);
+            ResultSet rs1=st.executeQuery(cal_bboxSql);
+            if(rs1.next())
+            {
+               double x=rs1.getDouble(1);
+               double y=rs1.getDouble(2);
+               x_bbox=x;
+               y_bbox=y;
+               System.out.println(x+" : "+y);
+            }
             //Check Is Already Calculated
             if(QueryResult.containsKey(sql+";"+year))
             {
@@ -215,15 +236,29 @@ public class CalculateCount  {
             Class.forName("org.postgresql.Driver");
             con = DriverManager
                .getConnection("jdbc:postgresql://"+getHost(year)+"/"+DBNAME,USERNAME,PASSWORD);
-            
+            //Connection con1=DriverManager
+            //   .getConnection("jdbc:postgresql://localhost:5432"+"/"+DBNAME,USERNAME,PASSWORD);
             Statement st=con.createStatement();
-            
+            //Statement st1=con1.createStatement();
+
             String dropViewSql="DROP VIEW IF EXISTS view"+year+"_"+itemToCount;
             String createViewSql="CREATE VIEW view"+year+"_"+itemToCount+" AS SELECT P2.* "+tempsql;
             //System.out.println(createViewSql);
             st.execute(dropViewSql);
             st.execute(createViewSql);
             
+            String cal_bboxSql="SELECT (st_xmin(ST_Extent(ST_Transform(P2.way,4326)))+st_xmax(ST_Extent(ST_Transform(P2.way,4326))))/2 as x,"+
+                    "(st_ymin(ST_Extent(ST_Transform(P2.way,4326)))+st_ymax(ST_Extent(ST_Transform(P2.way,4326))))/2 as y "+tempsql;
+            //System.out.println(cal_bboxSql);
+            ResultSet rs1=st.executeQuery(cal_bboxSql);
+            if(rs1.next())
+            {
+               double x=rs1.getDouble(1);
+               double y=rs1.getDouble(2);
+               x_bbox=x;
+               y_bbox=y;
+               System.out.println(x+" : "+y);
+            }
             //Check Is Already Calculated
             if(QueryResult.containsKey(sql+";"+year))
             {

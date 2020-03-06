@@ -13,14 +13,10 @@ public class PostgreSqlConnectionData {
     public static final String USERNAME="postgres";
     public static final String PASSWORD="postgres";
     public static final String PORT="5432";
-    public static final String HOST="35.229.165.44"+":"+PORT;
+    public static final String HOST="35.229.165.44";
     
     public static String getHost(int year)
     {
-        if(year == 2018)
-        {
-            return "35.228.180.77"+":"+PORT;
-        }
-        return "35.229.165.44"+":"+PORT;
+        return HOST+":"+PORT;
     }
 }
