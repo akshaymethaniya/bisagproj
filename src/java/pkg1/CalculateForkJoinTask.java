@@ -17,10 +17,24 @@ public class CalculateForkJoinTask extends RecursiveTask<Integer>{
     public int []COUNTS;
     private final CalculateCount cc;
     private final int fromyear;
+    public double []x_bbox;
+    public double []y_bbox;
+
+    public double[] getX_bbox() {
+        return x_bbox;
+    }
+
+    public double[] getY_bbox() {
+        return y_bbox;
+    }
+
+    
     public CalculateForkJoinTask(int fromyear,int totalYears,CalculateCount cc) {
         this.totalYears=totalYears;
         this.cc=cc;
         this.COUNTS=new int[totalYears];
+        this.x_bbox=new double[totalYears];        
+        this.y_bbox=new double[totalYears];
         this.fromyear=fromyear;
     }
     @Override
@@ -43,16 +57,21 @@ public class CalculateForkJoinTask extends RecursiveTask<Integer>{
             }
             for(int i=0;i<this.totalYears;i++){
                 COUNTS[subtasks[i].cc.year-this.fromyear]=subtasks[i].join();
+                x_bbox[subtasks[i].cc.year-this.fromyear]=subtasks[i].cc.getX_bbox();
+                y_bbox[subtasks[i].cc.year-this.fromyear]=subtasks[i].cc.getY_bbox();
             }
             return 0;
         }
         else
         {
             int count;
-            if(cc.geometry!=null)
-                count = cc.calculateWithinGeometry();
-            else
+            if(cc.geometry!=null){
+                count = cc.calculateWithinGeometry();    
+            }
+            else{
                 count = cc.calculate();
+            }
+            
             return count;
         }
     }

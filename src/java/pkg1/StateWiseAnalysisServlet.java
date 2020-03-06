@@ -56,6 +56,7 @@ public class StateWiseAnalysisServlet extends HttpServlet {
            map.put("x", YEARS[i]);
            map.put("y", task.COUNTS[i]);
            map.put("color",COLORS[i]);
+           //System.out.println(task.getX_bbox()[1]+"---"+task.getY_bbox()[1]);
            list.add(map);
         }
         
@@ -86,6 +87,10 @@ public class StateWiseAnalysisServlet extends HttpServlet {
         
         //Setting CountList To Request Attribute
         request.setAttribute("countList",list);
+        
+        //Setting BBox point 
+        request.setAttribute("X_BBOX",task.getX_bbox()[1]);
+        request.setAttribute("Y_BBOX",task.getY_bbox()[1]);
         //request.setAttribute("YEARS", YEARS);
         request.setAttribute("STATE_NAME",States.getStateName(STATE_OSM_ID));
 
